@@ -5,6 +5,7 @@ var hiveData = [
     lastDataTime: "17/05/2025 07:27",
     temperature: 24,
     humidity: 75,
+    location: "Tunis",
     longitude:1000,
     latitude:2000
   },
@@ -14,6 +15,17 @@ var hiveData = [
     lastDataTime: "17/05/2025 07:27",
     temperature: 26,
     humidity: 85,
+    location: "Ksour Essef",
+    longitude:1500,
+    latitude:2300
+  },
+   {
+    id: 3,
+    hiveName:"Test hive 3",
+    lastDataTime: "17/05/2025 07:27",
+    temperature: 26,
+    humidity: 85,
+    location: "Sousse",
     longitude:1500,
     latitude:2300
   }

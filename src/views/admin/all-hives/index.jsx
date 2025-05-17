@@ -1,9 +1,8 @@
 import React, { useEffect } from "react";
 import hiveData from "./variables/hiveData.js";
 import HiveCard from "./components/HiveCard.jsx";
-import NFt2 from "assets/img/nfts/Nft2.png";
-import NFt4 from "assets/img/nfts/Nft4.png";
-import NFt3 from "assets/img/nfts/Nft3.png";
+import BEE1 from "assets/img/beehive/bee1.png";
+import AddHiveButton from "./components/AddHiveButton.jsx";
 
 const AllHives = () => {
 
@@ -15,19 +14,19 @@ const AllHives = () => {
       })
       .catch((err) => console.error("Error fetching hives:", err));
   }, []);
+  function onAdd()
+  {
+    console.log("add button clicked");
+  }
 
   return (
+    <div>
+    <AddHiveButton AddBeehiveHandler={onAdd}/>
     <div className="z-20 grid grid-cols-1 gap-5 md:grid-cols-4">
-    <HiveCard
-      hiveName="Test hive 1"
-      id="1"
-      image={NFt2}
-      Temperature="27"
-      Humidity="75"
-      lastDataR="2025/05/2025 08:56"
-      link="default"
-      //extra="max-w-[250px]"
-    />
+   {hiveData.map((hive, index) => (
+    <HiveCard key={index} id={hive.id} hiveName={hive.hiveName} image={BEE1} Temperature={hive.temperature} Humidity={hive.humidity} Location={hive.location} lastDataR={hive.lastDataTime} link="default" />
+   ))}
+    </div>
     </div>
   );
 };

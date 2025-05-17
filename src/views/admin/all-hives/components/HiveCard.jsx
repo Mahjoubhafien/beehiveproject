@@ -4,8 +4,9 @@ import Card from "components/card";
 import DeviceThermostatIcon from '@mui/icons-material/DeviceThermostat';
 import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import GppGoodIcon from '@mui/icons-material/GppGood';
+import MapIcon from '@mui/icons-material/Map';
 
-const HiveCard = ({hiveName, id, Temperature,Humidity, image,link, lastDataR, extra}) => {
+const HiveCard = ({hiveName, id, Temperature,Humidity,Location, image,link, lastDataR, extra}) => {
   const [heart, setHeart] = useState(true);
   function state()
   {
@@ -58,7 +59,12 @@ const HiveCard = ({hiveName, id, Temperature,Humidity, image,link, lastDataR, ex
             <p className="mb-2 text-sm font-bold text-blue-500 dark:text-white">
              <WaterDropIcon /> Humidity: {Humidity} <span>%</span>
             </p>
-          </div>
+           </div>
+          <div className="flex">
+              <p className="mb-2 text-sm font-bold text-grey-500 dark:text-white">
+             <MapIcon /> Location: {Location}
+            </p>
+            </div>
             <div className="flex">
             <p className="mb-2 text-sm font-bold text-green-500 dark:text-white">
              <GppGoodIcon /> state: {state()}
