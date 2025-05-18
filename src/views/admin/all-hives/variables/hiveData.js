@@ -2,7 +2,7 @@ var hiveData = [
   {
     id: 1,
     hiveName:"Test hive 1",
-    lastDataTime: "17/05/2025 07:27",
+    hiveNumber: 1,
     temperature: 24,
     humidity: 75,
     location: "Tunis",
@@ -12,7 +12,7 @@ var hiveData = [
   {
     id: 2,
     hiveName:"Test hive 2",
-    lastDataTime: "17/05/2025 07:27",
+    hiveNumber: 2,
     temperature: 26,
     humidity: 85,
     location: "Ksour Essef",
@@ -22,7 +22,7 @@ var hiveData = [
    {
     id: 3,
     hiveName:"Test hive 3",
-    lastDataTime: "17/05/2025 07:27",
+    hiveNumber: 3,
     temperature: 26,
     humidity: 85,
     location: "Sousse",
