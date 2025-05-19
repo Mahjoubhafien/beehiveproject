@@ -5,12 +5,12 @@ import AddHiveArea from "./AddHiveArea.jsx";
 import BEE1 from "assets/img/beehive/bee1.png";
 import AddHiveButton from "./components/AddHiveButton.jsx";
 import Alert from "@mui/material/Alert";
+import { color } from "@chakra-ui/system";
 
 const AllHives = () => {
   const [listOfHives, setlistOfHives] = useState([]);
   const [isSlideclicked, setSladeState] = useState(false);
   const [isHiveAdded, setisHiveAdded] = useState(false);
-  const [hiveAlreadyEx, setHiveAlreadyEx] = useState(false);
   /*useEffect(() => {
     fetch("http://localhost:5000/admin/all-hives")
       .then((res) => res.json())
@@ -20,6 +20,22 @@ const AllHives = () => {
       .catch((err) => console.error("Error fetching hives:", err));
   }, []);*/
   /////////////////// UseEffect /////////////////////////
+  //geting all haves data from database
+  
+  useEffect(() => {
+    const fetchHives = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/admin/getAllHives");
+      const data = await response.json();
+      setlistOfHives(data);
+      console.log(listOfHives);
+    } catch (err) {
+      console.error("Error fetching data:", err);
+    }
+  };
+
+  fetchHives();
+}, []);
   useEffect(() => {
     if (isHiveAdded) {
       const timer = setTimeout(() => {
@@ -29,15 +45,6 @@ const AllHives = () => {
       return () => clearTimeout(timer); // Cleanup on unmount
     }
   }, [isHiveAdded]); // Run effect when `isHiveAdded` changes
-useEffect(() => {
-    if (hiveAlreadyEx) {
-      const timer = setTimeout(() => {
-        setHiveAlreadyEx(false); // Hide the alert after 3 seconds
-      }, 2000);
-
-      return () => clearTimeout(timer); // Cleanup on unmount
-    }
-  }, [hiveAlreadyEx]); // Run effect when `isHiveAdded` changes
   /////////////////// UseEffect /////////////////////////
   function sliderHandler() {
     setSladeState(!isSlideclicked);
@@ -51,9 +58,20 @@ try {
       },
       body: JSON.stringify(newHive),
     });
+    //refetch hives after adding 
+const fetchHives = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/admin/getAllHives");
+      const data = await response.json();
+      setlistOfHives(data);
+      console.log(listOfHives);
+    } catch (err) {
+      console.error("Error fetching data:", err);
+    }
+  };
 
+  fetchHives();
     if (!response.ok) {
-      setHiveAlreadyEx(!hiveAlreadyEx);
       throw new Error("Failed to add hive");
     }
 
@@ -75,13 +93,8 @@ try {
           Hive Added Succesfuly.
         </Alert>
       ) : null}
-      {hiveAlreadyEx ? (
-        <Alert variant="filled" severity="warning">
-          Hive Already Existe.
-        </Alert>
-      ) : null}
       <div className="z-20 grid grid-cols-1 gap-5 md:grid-cols-4">
-        {hiveData.map((hive, index) => (
+        {listOfHives.map((hive, index) => (
           <HiveCard
             key={index}
             id={hive.id}
@@ -89,8 +102,8 @@ try {
             image={BEE1}
             Temperature={hive.temperature}
             Humidity={hive.humidity}
-            Location={hive.location}
-            lastDataR={hive.lastDataTime}
+            Location={hive.location} //
+            lastDataR={hive.lastDataR}
             link="default"
           />
         ))}

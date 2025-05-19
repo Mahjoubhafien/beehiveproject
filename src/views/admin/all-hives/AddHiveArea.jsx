@@ -6,12 +6,11 @@ function AddHiveArea(props) {
   const [newHive, setNewHive] = useState({
     hiveName: "",
     hiveLocation: "",
-    hiveNumber: "",
+    sensorId: "",
   });
 
   function textHandler(e) {
     const { id, value } = e.target;
-
     setNewHive((lastValue) => {
       return {
         ...lastValue,
@@ -44,19 +43,19 @@ function AddHiveArea(props) {
       />
       <TextField
         onChange={textHandler}
-        label="Hive Number"
+        label="Sensor ID"
         placeholder="must be unique !"
-        id="hiveNumber"
+        id="sensorId"
         cols="5"
         rows="2"
         type="number"
-        value={newHive.hiveNumber}
+        value={newHive.sensorId}
       />
       <div className="mt-6 flex items-center justify-start">
         <button
           onClick={() => {
             props.AddHive(newHive);
-            setNewHive({ hiveName: "", hiveLocation: "", hiveNumber: "" });
+            setNewHive({ hiveName: "", hiveLocation: "", sensorId: "" });
           }}
           className="flex items-center justify-center rounded-full bg-brand-500 p-3 text-3xl text-white transition duration-200 hover:cursor-pointer hover:bg-brand-600 active:bg-brand-700 dark:bg-brand-400 dark:text-white dark:hover:bg-brand-300 dark:active:bg-brand-200"
         >

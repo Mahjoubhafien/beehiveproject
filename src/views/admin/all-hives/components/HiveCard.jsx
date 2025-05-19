@@ -1,17 +1,37 @@
 import { IoHeart, IoHeartOutline } from "react-icons/io5";
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import Card from "components/card";
 import DeviceThermostatIcon from '@mui/icons-material/DeviceThermostat';
 import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import GppGoodIcon from '@mui/icons-material/GppGood';
+import GppBadIcon from '@mui/icons-material/GppBad';
+import GppMaybeIcon from '@mui/icons-material/GppMaybe';
 import MapIcon from '@mui/icons-material/Map';
 
 const HiveCard = ({hiveName, id, Temperature,Humidity,Location, image,link, lastDataR, extra}) => {
   const [heart, setHeart] = useState(true);
-  function state()
-  {
-    return "Good";
+  const [healthStatus, setHealthStatus] = useState('Checking...');
+useEffect(() => {
+  // Update health status whenever temperature or humidity changes
+  setHealthStatus(checkHiveHealth(Temperature, Humidity));
+}, [Temperature, Humidity]);
+const checkHiveHealth = (Temperature, Humidity) => {
+  // Define healthy ranges (adjust these values according to beekeeping standards)
+  const MIN_TEMP = 32;
+  const MAX_TEMP = 36;
+  const MIN_HUMIDITY = 50;
+  const MAX_HUMIDITY = 70;
+
+  if (Temperature === null || Humidity === null) {
+    return 'No Data';
   }
+
+  if (Temperature >= MIN_TEMP && Temperature <= MAX_TEMP && 
+      Humidity >= MIN_HUMIDITY && Humidity <= MAX_HUMIDITY) {
+    return 'Healthy';
+  }
+  return 'Unhealthy';
+};
   return (
     <Card
       extra={`flex flex-col w-full h-full !p-4 3xl:p-![18px] bg-white ${extra}`}
@@ -52,12 +72,12 @@ const HiveCard = ({hiveName, id, Temperature,Humidity,Location, image,link, last
         <div className="flex items-center justify-between md:flex-col md:items-start lg:flex-row lg:justify-between xl:flex-col 2xl:items-start 3xl:flex-row 3xl:items-center 3xl:justify-between">
           <div className="flex">
             <p className="mb-2 text-sm font-bold text-red-500 dark:text-white">
-              <DeviceThermostatIcon /> Temperature: {Temperature} <span>°C</span>
+              <DeviceThermostatIcon /> Temperature: {Temperature!== null ? <span>{Temperature} °C</span>: <span style={{color:"grey"}}>Waiting for data...</span> } 
             </p>
           </div>
             <div className="flex">
             <p className="mb-2 text-sm font-bold text-blue-500 dark:text-white">
-             <WaterDropIcon /> Humidity: {Humidity} <span>%</span>
+             <WaterDropIcon /> Humidity: {Humidity!== null ? <span>{Humidity} °C</span>: <span style={{color:"grey"}}>Waiting for data...</span> }
             </p>
            </div>
           <div className="flex">
@@ -66,9 +86,21 @@ const HiveCard = ({hiveName, id, Temperature,Humidity,Location, image,link, last
             </p>
             </div>
             <div className="flex">
-            <p className="mb-2 text-sm font-bold text-green-500 dark:text-white">
-             <GppGoodIcon /> state: {state()}
-            </p>
+            <p className="mb-2 text-sm font-bold dark:text-white">
+  {healthStatus === 'Healthy' ? (
+    <span className="text-green-500">
+      <GppGoodIcon /> State: Healthy
+    </span>
+  ) : healthStatus === 'Unhealthy' ? (
+    <span className="text-orange-500">
+      <GppBadIcon /> State: Unhealthy
+    </span>
+  ) : (
+    <span className="text-gray-500">
+      <GppMaybeIcon /> State: No Data
+    </span>
+  )}
+</p>
           </div>
             <p className="mb-1 text-sm font-medium text-gray-600 md:mt-2">
               Last data {lastDataR}
