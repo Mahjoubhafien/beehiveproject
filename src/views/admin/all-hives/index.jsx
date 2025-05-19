@@ -5,7 +5,7 @@ import AddHiveArea from "./AddHiveArea.jsx";
 import BEE1 from "assets/img/beehive/bee1.png";
 import AddHiveButton from "./components/AddHiveButton.jsx";
 import Alert from "@mui/material/Alert";
-import { color } from "@chakra-ui/system";
+import HivesSummary from "./components/HivesSummary.jsx";
 
 const AllHives = () => {
   const [listOfHives, setlistOfHives] = useState([]);
@@ -120,6 +120,7 @@ const AllHives = () => {
 
   return (
     <div>
+        <HivesSummary />
       <AddHiveButton sliderHandler={sliderHandler} />
       {isSlideclicked ? <AddHiveArea AddHive={AddHiveHandler} /> : null}
       {isHiveAdded ? (
