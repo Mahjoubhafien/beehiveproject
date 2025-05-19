@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import TextField from "components/fields/TextField.jsx";
 import AddIcon from "@mui/icons-material/Add";
+import UploadIcon from '@mui/icons-material/Upload';
 
 function AddHiveArea(props) {
   const [newHive, setNewHive] = useState({
@@ -18,7 +19,10 @@ function AddHiveArea(props) {
       };
     });
   }
-
+function UploadPhotoHandler()
+{
+  console.log("upload photo handler got clicked");
+}
   return (
     <div className="z-20 mb-5 grid grid-cols-1 gap-5 md:grid-cols-4">
       <TextField
@@ -51,7 +55,11 @@ function AddHiveArea(props) {
         type="number"
         value={newHive.sensorId}
       />
+  
       <div className="mt-6 flex items-center justify-start">
+        <button onClick={UploadPhotoHandler} className="mr-5 rounded-xl bg-gradient-to-br from-brandLinear to-blueSecondary px-5 py-3 text-base font-medium text-white transition duration-200 hover:shadow-lg hover:shadow-blueSecondary/50">
+ <UploadIcon /> Upload Hive Photo
+</button>
         <button
           onClick={() => {
             props.AddHive(newHive);
