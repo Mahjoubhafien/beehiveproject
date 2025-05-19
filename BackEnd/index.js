@@ -2,6 +2,9 @@ import express from "express";
 import bodyParser from "body-parser";
 import pg from "pg";
 import cors from "cors";
+//import multer from 'multer';
+//import path from 'path';
+//import { fileURLToPath } from 'url';
 
 
 
@@ -35,11 +38,15 @@ res.json({ message: "Hello from server" });  // ✅ this is JSON
 Adding new hive to beehives table
 */
 app.post("/admin/add-hive", async (req, res) => {
-    const { hiveName, hiveLocation, sensorId } = req.body;
+    const { hiveName, hiveLocation, sensorId, photoUrl } = req.body;
+  // Check if sensorId is null or empty
+  if (!sensorId || sensorId.trim() === '') {
+    return res.status(400).json({ error: 'Sensor ID cannot be empty' });
+  }
 try {
     const result = await db.query(
-      'INSERT INTO beehives (user_id, hive_name, hive_location, hive_type, sensor_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [currentUserId, hiveName, hiveLocation,null, sensorId]
+      'INSERT INTO beehives (user_id, hive_name, hive_location, hive_type, sensor_id, image_url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [currentUserId, hiveName, hiveLocation,null, sensorId, photoUrl]
     );
     // Access hive_number of the newly inserted row
     const newHive = result.rows[0];

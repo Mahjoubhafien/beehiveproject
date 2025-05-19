@@ -11,31 +11,23 @@ const AllHives = () => {
   const [listOfHives, setlistOfHives] = useState([]);
   const [isSlideclicked, setSladeState] = useState(false);
   const [isHiveAdded, setisHiveAdded] = useState(false);
-  /*useEffect(() => {
-    fetch("http://localhost:5000/admin/all-hives")
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("Backend says:", data);
-      })
-      .catch((err) => console.error("Error fetching hives:", err));
-  }, []);*/
-  /////////////////// UseEffect /////////////////////////
-  //geting all haves data from database
-  
+  const [isSensorIdNull, setIsSensorIdNull] = useState(false);
+  const [isSensorIdAlreadyExist, setIsSensorIdAlreadyExist] = useState(false);
   useEffect(() => {
     const fetchHives = async () => {
-    try {
-      const response = await fetch("http://localhost:5000/admin/getAllHives");
-      const data = await response.json();
-      setlistOfHives(data);
-      console.log(listOfHives);
-    } catch (err) {
-      console.error("Error fetching data:", err);
-    }
-  };
+      try {
+        const response = await fetch("http://localhost:5000/admin/getAllHives");
+        const data = await response.json();
+        setlistOfHives(data);
+        console.log(listOfHives);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      }
+    };
 
-  fetchHives();
-}, []);
+    fetchHives();
+  }, []);
+  ///////////// notification area /////////////////
   useEffect(() => {
     if (isHiveAdded) {
       const timer = setTimeout(() => {
@@ -45,43 +37,85 @@ const AllHives = () => {
       return () => clearTimeout(timer); // Cleanup on unmount
     }
   }, [isHiveAdded]); // Run effect when `isHiveAdded` changes
-  /////////////////// UseEffect /////////////////////////
+  useEffect(() => {
+    if (isSensorIdNull) {
+      const timer = setTimeout(() => {
+        setIsSensorIdNull(false); // Hide the alert after 3 seconds
+      }, 2000);
+
+      return () => clearTimeout(timer); // Cleanup on unmount
+    }
+  }, [isSensorIdNull]); // Run effect when `isHiveAdded` changes
+  useEffect(() => {
+    if (isSensorIdAlreadyExist) {
+      const timer = setTimeout(() => {
+        setIsSensorIdAlreadyExist(false); // Hide the alert after 3 seconds
+      }, 2000);
+
+      return () => clearTimeout(timer); // Cleanup on unmount
+    }
+  }, [isSensorIdAlreadyExist]); // Run effect when `isHiveAdded` changes
+
+  ///////////// END Notification area /////////////////
+
   function sliderHandler() {
     setSladeState(!isSlideclicked);
   }
   async function AddHiveHandler(newHive) {
-try {
-    const response = await fetch("http://localhost:5000/admin/add-hive", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(newHive),
-    });
-    //refetch hives after adding 
-const fetchHives = async () => {
+    /////////// check if sensor id empty ///////////////
+    if (!newHive.sensorId || newHive.sensorId.trim() === "") {
+      setIsSensorIdNull(true);
+      console.log("Sensor ID cannot be empty");
+      return;
+    }
+    ////////////////////////////////////////////////////
+
+    /////////// adding hive query ///////////////
     try {
-      const response = await fetch("http://localhost:5000/admin/getAllHives");
-      const data = await response.json();
-      setlistOfHives(data);
-      console.log(listOfHives);
-    } catch (err) {
-      console.error("Error fetching data:", err);
-    }
-  };
+      const response = await fetch("http://localhost:5000/admin/add-hive", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newHive),
+      });
+      ////////////////////////////////////////////////////
 
-  fetchHives();
-    if (!response.ok) {
-      throw new Error("Failed to add hive");
-    }
+      /////////// check if sensor id already existe ///////////////
 
-    const result = await response.json();
-    console.log("Hive added successfully:", result);
-    setisHiveAdded(true); // Show success alert
-     } catch (error) {
-    console.error("Error adding hive:", error);
-    // You might want to show an error alert here
-  }
+      const result = await response.json();
+
+      if (!response.ok) {
+        // Check if error is about existing sensor ID
+        if (result.error && result.error.includes("Database error")) {
+          setIsSensorIdAlreadyExist(true);
+        }
+        throw new Error(result.error || "Failed to add hive");
+      }
+      // If we get here, the hive was added successfully
+      console.log("Hive added successfully:", result);
+      setisHiveAdded(true); // Show success alert
+
+      ////////////////////////////////////////////////////
+
+      /////////// refetch hives after adding ///////////////
+      const fetchHives = async () => {
+        try {
+          const response = await fetch(
+            "http://localhost:5000/admin/getAllHives"
+          );
+          const data = await response.json();
+          setlistOfHives(data);
+          console.log(listOfHives);
+        } catch (err) {
+          console.error("Error fetching data:", err);
+        }
+      };
+      await fetchHives();
+    } catch (error) {
+      console.error("Error adding hive:", error);
+      // You might want to show an error alert here
+    }
   }
 
   return (
@@ -93,6 +127,17 @@ const fetchHives = async () => {
           Hive Added Succesfuly.
         </Alert>
       ) : null}
+      {isSensorIdNull ? (
+        <Alert variant="filled" severity="warning">
+          Sensor Id Cannot Be Empty !
+        </Alert>
+      ) : null}
+      {isSensorIdAlreadyExist ? (
+        <Alert variant="filled" severity="info">
+          Sensor Id Already Exist !
+        </Alert>
+      ) : null}
+
       <div className="z-20 grid grid-cols-1 gap-5 md:grid-cols-4">
         {listOfHives.map((hive, index) => (
           <HiveCard

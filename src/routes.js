@@ -6,6 +6,7 @@ import AllHives from "views/admin/all-hives";
 import Profile from "views/admin/profile";
 import DataTables from "views/admin/tables";
 import RTLDefault from "views/rtl/default";
+import { GiBeehive } from "react-icons/gi";
 
 // Auth Imports
 import SignIn from "views/auth/SignIn";
@@ -24,7 +25,7 @@ const routes = [
     name: "All Hives",
     layout: "/admin",
     path: "all-hives",
-    icon: <MdOutlineShoppingCart className="h-6 w-6" />,
+    icon: <GiBeehive className="h-6 w-6" />,
     component: <AllHives />,
     secondary: true,
   },
