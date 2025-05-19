@@ -1,66 +1,36 @@
 import React, { useState } from "react";
-import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import Typography from '@mui/material/Typography';
-import CardActionArea from '@mui/material/CardActionArea';
+import Divider from '@mui/material/Divider';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import { styled } from '@mui/material/styles';
 
-const cards = [
-  {
-    id: 1,
-    title: 'Plants',
-    description: 'Plants are essential for all life.',
-  },
-  {
-    id: 2,
-    title: 'Animals',
-    description: 'Animals are a part of nature.',
-  },
-  {
-    id: 3,
-    title: 'Humans',
-    description: 'Humans depend on plants and animals for survival.',
-  },
-];
+const Item = styled(Paper)(({ theme }) => ({
+  backgroundColor: '#fff',
+  ...theme.typography.body2,
+  padding: theme.spacing(1),
+  textAlign: 'center',
+  color: (theme.vars ?? theme).palette.text.secondary,
+  ...theme.applyStyles('dark', {
+    backgroundColor: '#1A2027',
+  }),
+}));
+
 
 function HivesSummary(props){
-      const [selectedCard, setSelectedCard] = React.useState(0);
+      
     return (
-    <Box className="mt-5 " 
-      sx={{
-        width: '100%',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(min(200px, 100%), 1fr))',
-        gap: 2,
-      }}
-    >
-      {cards.map((card, index) => (
-        <Card>
-          <CardActionArea
-            onClick={() => setSelectedCard(index)}
-            data-active={selectedCard === index ? '' : undefined}
-            sx={{
-              height: '100%',
-              '&[data-active]': {
-                backgroundColor: 'action.selected',
-                '&:hover': {
-                  backgroundColor: 'action.selectedHover',
-                },
-              },
-            }}
-          >
-            <CardContent sx={{ height: '100%' }}>
-              <Typography variant="h5" component="div">
-                {card.title}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {card.description}
-              </Typography>
-            </CardContent>
-          </CardActionArea>
-        </Card>
-      ))}
-    </Box>
+     <div>
+      <Stack
+        direction="row"
+        divider={<Divider orientation="vertical" flexItem />}
+        spacing={2}
+      >
+        <Item>Total Hive</Item>
+        <Item>Healthy Hive</Item>
+        <Item>Unhealthy hive</Item>
+        <Item>No Data hive</Item>
+      </Stack>
+    </div>
   );
 }
 export default HivesSummary;

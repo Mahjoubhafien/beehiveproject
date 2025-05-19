@@ -120,7 +120,9 @@ const AllHives = () => {
 
   return (
     <div>
+      <div className="flex items-center justify-center mt-5">
         <HivesSummary />
+      </div>
       <AddHiveButton sliderHandler={sliderHandler} />
       {isSlideclicked ? <AddHiveArea AddHive={AddHiveHandler} /> : null}
       {isHiveAdded ? (
