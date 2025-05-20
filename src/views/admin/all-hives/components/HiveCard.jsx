@@ -17,10 +17,13 @@ const HiveCard = ({
   image,
   link,
   lastDataR,
+  onHealthStatusChange,
   extra,
 }) => {
   const [heart, setHeart] = useState(true);
   const [healthStatus, setHealthStatus] = useState("Checking...");
+
+
   useEffect(() => {
     // Update health status whenever temperature or humidity changes
     setHealthStatus(checkHiveHealth(Temperature, Humidity));
@@ -33,6 +36,7 @@ const HiveCard = ({
     const MAX_HUMIDITY = 70;
 
     if (Temperature === null || Humidity === null) {
+      onHealthStatusChange("No Data")
       return "No Data";
     }
 
@@ -42,8 +46,12 @@ const HiveCard = ({
       Humidity >= MIN_HUMIDITY &&
       Humidity <= MAX_HUMIDITY
     ) {
+            onHealthStatusChange("Healthy")
+
       return "Healthy";
     }
+          onHealthStatusChange("Unhealthy")
+
     return "Unhealthy";
   };
   return (
@@ -113,16 +121,16 @@ const HiveCard = ({
             <p className="mb-2 text-sm font-bold dark:text-white">
               {healthStatus === "Healthy" ? (
                 <span className="text-green-500">
-                  <GppGoodIcon /> State: Healthy
-                </span>
-              ) : healthStatus === "Unhealthy" ? (
+                  <GppGoodIcon /> State: Healthy 
+                </span> 
+              )  : healthStatus === "Unhealthy" ? (
                 <span className="text-orange-500">
-                  <GppBadIcon /> State: Unhealthy
-                </span>
+                  <GppBadIcon /> State: Unhealthy 
+                </span> 
               ) : (
                 <span className="text-gray-500">
-                  <GppMaybeIcon /> State: No Data
-                </span>
+                  <GppMaybeIcon /> State: No Data 
+                </span> 
               )}
             </p>
           </div>

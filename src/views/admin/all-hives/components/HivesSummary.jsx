@@ -25,10 +25,10 @@ function HivesSummary(props){
         divider={<Divider orientation="vertical" flexItem />}
         spacing={2}
       >
-        <Item>Total Hive</Item>
-        <Item>Healthy Hive</Item>
-        <Item>Unhealthy hive</Item>
-        <Item>No Data hive</Item>
+        <Item style={{backgroundColor:"#1976d2", color:"white"}} >Total Hive <span style={{fontWeight: "bold"}}>{props.totalHive}</span></Item>
+        <Item style={{backgroundColor:"#2e7d32", color:"white"}} >Healthy Hive <span style={{fontWeight: "bold"}}>{props.healthyHives}</span></Item>
+        <Item style={{backgroundColor:"#d32f2f", color:"white"}} >Unhealthy Hive <span style={{fontWeight: "bold"}}>{props.unhealthyHives}</span> </Item>
+        <Item style={{backgroundColor:"#616161", color:"white"}} >No Data hive <span style={{fontWeight: "bold"}}>{props.noDataHives}</span></Item>
       </Stack>
     </div>
   );

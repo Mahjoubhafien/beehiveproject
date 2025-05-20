@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
-import hiveData from "./variables/hiveData.js";
 import HiveCard from "./components/HiveCard.jsx";
-import AddHiveArea from "./AddHiveArea.jsx";
+import AddHiveArea from "./components/AddHiveArea.jsx";
 import BEE1 from "assets/img/beehive/bee1.png";
 import AddHiveButton from "./components/AddHiveButton.jsx";
 import Alert from "@mui/material/Alert";
@@ -13,6 +12,20 @@ const AllHives = () => {
   const [isHiveAdded, setisHiveAdded] = useState(false);
   const [isSensorIdNull, setIsSensorIdNull] = useState(false);
   const [isSensorIdAlreadyExist, setIsSensorIdAlreadyExist] = useState(false);
+const [healthCounts, setHealthCounts] = useState({
+    healthy: 0,
+    unhealthy: 0,
+    noData: 0
+  });
+  const updateHealthCounts = (status) => {
+    setHealthCounts(prev => {
+      const newCounts = {...prev};
+      if (status === 'Healthy') newCounts.healthy += 1;
+      else if (status === 'Unhealthy') newCounts.unhealthy += 1;
+      else newCounts.noData += 1;
+      return newCounts;
+    });
+  };
   useEffect(() => {
     const fetchHives = async () => {
       try {
@@ -117,11 +130,12 @@ const AllHives = () => {
       // You might want to show an error alert here
     }
   }
-
   return (
     <div>
       <div className="flex items-center justify-center mt-5">
-        <HivesSummary />
+        <HivesSummary totalHive={listOfHives.length} healthyHives={healthCounts.healthy} unhealthyHives={healthCounts.unhealthy}
+          noDataHives={healthCounts.noData}
+          />
       </div>
       <AddHiveButton sliderHandler={sliderHandler} />
       {isSlideclicked ? <AddHiveArea AddHive={AddHiveHandler} /> : null}
@@ -152,6 +166,7 @@ const AllHives = () => {
             Humidity={hive.humidity}
             Location={hive.location} //
             lastDataR={hive.lastDataR}
+            onHealthStatusChange={updateHealthCounts}
             link="default"
           />
         ))}
