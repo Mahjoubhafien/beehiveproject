@@ -26,6 +26,37 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 
+app.post("/temphum", async (req, res) => {
+  console.log("Received data from ESP32:", req.body);
+  const { local_sensor, remote_sensor } = req.body;
+
+  const sensors = [local_sensor, remote_sensor];
+
+  const insertQuery = `
+    INSERT INTO sensors_data (sensor_id, temperature, humidity, latitude, longitude)
+    VALUES ($1, $2, $3, $4, $5)
+  `;
+
+  try {
+    for (const sensor of sensors) {
+      const values = [
+        sensor.id,
+        sensor.temperature,
+        sensor.humidity,
+        sensor.latitude,
+        sensor.longitude
+      ];
+
+      await db.query(insertQuery, values);
+    }
+
+    res.status(200).send("Data received and stored successfully!");
+  } catch (error) {
+    console.error("Error inserting data into PostgreSQL:", error);
+    res.status(500).send("Database insertion error");
+  }
+});
+
 app.get("/getData", async (req, res) => {
   const result = await db.query("SELECT * FROM beehive_data");
     res.json(result.rows);  // Send data as JSON
