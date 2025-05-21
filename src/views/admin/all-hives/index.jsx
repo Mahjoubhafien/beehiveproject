@@ -167,7 +167,7 @@ const [healthCounts, setHealthCounts] = useState({
             Location={hive.location} //
             lastDataR={hive.lastDataR}
             onHealthStatusChange={updateHealthCounts}
-            link="default"
+            link="detailed-dashboard"
           />
         ))}
       </div>

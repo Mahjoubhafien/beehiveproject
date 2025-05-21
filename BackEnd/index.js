@@ -25,7 +25,9 @@ app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-
+/*
+Getting sensor data
+*/
 app.post("/temphum", async (req, res) => {
   console.log("Received data from ESP32:", req.body);
   const { local_sensor, remote_sensor } = req.body;
@@ -55,15 +57,6 @@ app.post("/temphum", async (req, res) => {
     console.error("Error inserting data into PostgreSQL:", error);
     res.status(500).send("Database insertion error");
   }
-});
-
-app.get("/getData", async (req, res) => {
-  const result = await db.query("SELECT * FROM beehive_data");
-    res.json(result.rows);  // Send data as JSON
-});
-app.get("/admin/all-hives", async (req, res) => {
-    console.log("i got triggered");
-res.json({ message: "Hello from server" });  // ✅ this is JSON
 });
 /*
 Adding new hive to beehives table
@@ -126,6 +119,23 @@ try {
   } catch (err) {
     console.error("Error fetching hive data:", err);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+/*
+Filtration get specific hive data
+*/
+app.get("/admin/detailed-dashboard/:id", async (req, res) => {
+try {
+    const sensor_id = req.params.id;
+    
+    console.log("sensor Id:"+ sensor_id);
+    res.status(200).send("Dashboard Data");
+    
+  } catch (err) {
+    console.error("Error fetching hive data:", err);
+    res.status(500).json({ error: "Internal server error" });
+
+
   }
 });
 

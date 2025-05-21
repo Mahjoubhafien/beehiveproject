@@ -138,7 +138,10 @@ const HiveCard = ({
             Last data {lastDataR}
           </p>
           <button
-            onClick={() => (window.location.href = link)}
+           onClick={async () => {
+           const response = await fetch("http://localhost:5000/admin/detailed-dashboard/"+id);
+          window.location.href = link;
+}}
             className="linear rounded-[20px] bg-brand-900 px-4 py-2 text-base font-medium text-white transition duration-200 hover:bg-brand-800 active:bg-brand-700 dark:bg-brand-400 dark:hover:bg-brand-300 dark:active:opacity-90"
           >
             More Detail
