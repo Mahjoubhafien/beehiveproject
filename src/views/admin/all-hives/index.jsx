@@ -37,7 +37,6 @@ const [healthCounts, setHealthCounts] = useState({
         console.error("Error fetching data:", err);
       }
     };
-
     fetchHives();
   }, []);
   ///////////// notification area /////////////////

@@ -23,12 +23,12 @@ const HiveCard = ({
   const [heart, setHeart] = useState(true);
   const [healthStatus, setHealthStatus] = useState("Checking...");
 
-
   useEffect(() => {
     // Update health status whenever temperature or humidity changes
     setHealthStatus(checkHiveHealth(Temperature, Humidity));
   }, [Temperature, Humidity]);
-  const checkHiveHealth = (Temperature, Humidity) => {
+
+  const checkHiveHealth =  (Temperature, Humidity) => {
     // Define healthy ranges (adjust these values according to beekeeping standards)
     const MIN_TEMP = 32;
     const MAX_TEMP = 36;
@@ -46,14 +46,31 @@ const HiveCard = ({
       Humidity >= MIN_HUMIDITY &&
       Humidity <= MAX_HUMIDITY
     ) {
-            onHealthStatusChange("Healthy")
-
+      onHealthStatusChange("Healthy")
       return "Healthy";
     }
-          onHealthStatusChange("Unhealthy")
+    onHealthStatusChange("Unhealthy")
 
     return "Unhealthy";
   };
+   useEffect(() => {
+      const sendHiveState = async () => {
+        try {
+          await fetch('http://localhost:5000/admin/insertState', {
+          method: 'POST',
+           headers: {
+           'Content-Type': 'application/json'
+           },
+            body: JSON.stringify({
+            healthStatus, id
+          })
+        });
+        } catch (err) {
+          console.error("Error fetching data:", err);
+        }
+      };
+      sendHiveState();
+    }, [healthStatus, id]);
   return (
     <Card
       extra={`flex flex-col w-full h-full !p-4 3xl:p-![18px] bg-white ${extra}`}
@@ -139,7 +156,7 @@ const HiveCard = ({
           </p>
           <button
            onClick={async () => {
-           const response = await fetch("http://localhost:5000/admin/detailed-dashboard/"+id);
+           await fetch("http://localhost:5000/admin/detailed-dashboard/"+id);
           window.location.href = link;
 }}
             className="linear rounded-[20px] bg-brand-900 px-4 py-2 text-base font-medium text-white transition duration-200 hover:bg-brand-800 active:bg-brand-700 dark:bg-brand-400 dark:hover:bg-brand-300 dark:active:opacity-90"
