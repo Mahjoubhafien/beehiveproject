@@ -271,7 +271,7 @@ export const lineChartDataTotalSpent = [
 
 export const lineChartOptionsTotalSpent = {
   legend: {
-    show: false,
+    show: true,
   },
 
   theme: {
@@ -281,12 +281,12 @@ export const lineChartOptionsTotalSpent = {
     type: "line",
 
     toolbar: {
-      show: false,
+      show: true,
     },
   },
 
   dataLabels: {
-    enabled: false,
+    enabled: true,
   },
   stroke: {
     curve: "smooth",
@@ -304,14 +304,14 @@ export const lineChartOptionsTotalSpent = {
     },
   },
   grid: {
-    show: false,
+    show: true,
   },
   xaxis: {
     axisBorder: {
-      show: false,
+      show: true,
     },
     axisTicks: {
-      show: false,
+      show: true,
     },
     labels: {
       style: {
@@ -326,6 +326,6 @@ export const lineChartOptionsTotalSpent = {
   },
 
   yaxis: {
-    show: false,
+    show: true,
   },
 };

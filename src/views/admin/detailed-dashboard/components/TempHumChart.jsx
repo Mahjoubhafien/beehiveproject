@@ -6,7 +6,6 @@ import {
 } from "react-icons/md";
 import Card from "components/card";
 import {
-  lineChartDataTotalSpent,
   lineChartOptionsTotalSpent,
 } from "variables/charts";
 import LineChart from "components/charts/LineChart";
@@ -16,13 +15,16 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { MdChevronRight } from 'react-icons/md';
 
+import Alert from '@mui/material/Alert';
+
 export default function TempHumChart({ allSensorData = [] }) {
   const [startDate, setStartDate] = useState(dayjs());
   const [endDate, setEndDate] = useState(dayjs());
   const[currentSelectedData, setCurrentSelectedData] = useState([])
+  const[isFetchButtonClicked, setIsFetchButtonClicked] = useState(false)
+  const[isDataRangeCorrect, setIsDataRangeCorrect] = useState(true)
 
-  // Get last 24 valid readings
-  const allReadingReadings =
+  const allReading =
     allSensorData
       ?.filter(
         (sensor) =>
@@ -35,11 +37,75 @@ export default function TempHumChart({ allSensorData = [] }) {
         temp: sensor.temperature,
         hum: sensor.humidity,
       })) || [];
-function fetchChartHandler(){
-  return;
-}
-  return (
+      console.log(allReading);
+  const prepareChartData = (sensorData) => {
+  return [
+    {
+      name: "Temperature (°C)",
+      data: sensorData.map(item => parseFloat(item.temp)),
+      color: "#D22B2B",  // Purple for temperature
+    },
+    {
+      name: "Humidity (%)",
+      data: sensorData.map(item => parseFloat(item.hum)),
+      color: "#6AD2FF",  // Light blue for humidity
+    }
+  ];
+};
+// Prepare categories (time labels) for x-axis
+const prepareCategories = (sensorData) => {
+  return sensorData.map(item => 
+    dayjs(item.time).format('HH:mm')  // Format as "17:15"
+    // Alternatively: dayjs(item.time).format('DD/MM HH:mm') for date+time
+  );
+};
+// Update chart options with dynamic categories
+const lineChartOptions = {
+  ...lineChartOptionsTotalSpent,  // Spread the existing options
+  xaxis: {
+    ...lineChartOptionsTotalSpent.xaxis,
+    categories: prepareCategories(currentSelectedData.length > 0 ? currentSelectedData : allReading.slice(-24)),
+    labels: {
+      ...lineChartOptionsTotalSpent.xaxis.labels,
+      formatter: function(value) {
+        return value;  // Use the formatted time string directly
+      }
+    },
+    type: "category",  // Better for time series
+  },
+  tooltip: {
+    ...lineChartOptionsTotalSpent.tooltip,
+    x: {
+      format: "dd/MM/yy HH:mm",  // Keep detailed format in tooltip
+    },
+  }
+};
+
+///Fetch button handler ///
+  function fetchChartHandler() {
+    // Convert Day.js objects to JavaScript Date objects
+    const start = new Date(startDate.startOf('day').toDate());
+  const end = new Date(endDate.endOf('day').toDate());
+    
+    // Filter data within the selected date range
+    const filteredData = allReading.filter((reading) => {
+      const readingTime = reading.time;
+      return readingTime >= start && readingTime <= end;
+    });
+    
+    setCurrentSelectedData(filteredData);
+    setIsFetchButtonClicked(true);
+    console.log('Filtered data:', filteredData); // For debugging
+    if (filteredData.length === 0){setIsDataRangeCorrect(false)}else{setIsDataRangeCorrect(true)}
+  }
+
+    
+    return (
     <Card extra="!p-[20px] text-center">
+      {!isDataRangeCorrect ? <div className="mb-2">
+           <Alert severity="warning">Invalid date range: End date must be after Start date!</Alert>
+        </div>:null}
+      
       <LocalizationProvider dateAdapter={AdapterDayjs}>
           <div className="flex items-center gap-4 w-full">
   {/* Start Date - Takes available space */}
@@ -83,24 +149,15 @@ function fetchChartHandler(){
       </LocalizationProvider>
 
       <div className="flex h-full w-full flex-row justify-between sm:flex-wrap lg:flex-nowrap 2xl:overflow-hidden">
-        <div className="flex flex-col">
-          <p className="mt-[20px] text-3xl font-bold text-navy-700 dark:text-white">
-            $37.5K
-          </p>
-          <div className="flex flex-col items-start">
-            <p className="mt-2 text-sm text-gray-600">Total Spent</p>
-            <div className="flex flex-row items-center justify-center">
-              <MdArrowDropUp className="font-medium text-green-500" />
-              <p className="text-sm font-bold text-green-500"> +2.45% </p>
-            </div>
-          </div>
-        </div>
+        
         <div className="h-full w-full">
           <LineChart
-            options={lineChartOptionsTotalSpent}
-            series={lineChartDataTotalSpent}
-          />
-        </div>
+            options={lineChartOptions}
+            series={prepareChartData(currentSelectedData.length > 0 ? currentSelectedData : allReading.slice(-24))}
+          /> 
+        </div> 
+        {/*
+         */}
       </div>
     </Card>
   );
