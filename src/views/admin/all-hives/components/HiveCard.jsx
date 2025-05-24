@@ -7,6 +7,7 @@ import GppGoodIcon from "@mui/icons-material/GppGood";
 import GppBadIcon from "@mui/icons-material/GppBad";
 import GppMaybeIcon from "@mui/icons-material/GppMaybe";
 import MapIcon from "@mui/icons-material/Map";
+import { MdGpsFixed } from "react-icons/md";
 
 const HiveCard = ({
   hiveName,
@@ -14,21 +15,33 @@ const HiveCard = ({
   Temperature,
   Humidity,
   Location,
+  Longitude,
+  Latitude,
   image,
   link,
   lastDataR,
   onHealthStatusChange,
+  GpsErrorHandler,
   extra,
 }) => {
   const [heart, setHeart] = useState(true);
   const [healthStatus, setHealthStatus] = useState("Checking...");
+  const [sensorLocation, setSensorLocation] = useState("");
+  const [isRed, setIsRed] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsRed((prev) => !prev);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     // Update health status whenever temperature or humidity changes
     setHealthStatus(checkHiveHealth(Temperature, Humidity));
   }, [Temperature, Humidity]);
 
-  const checkHiveHealth =  (Temperature, Humidity) => {
+  const checkHiveHealth = (Temperature, Humidity) => {
     // Define healthy ranges (adjust these values according to beekeeping standards)
     const MIN_TEMP = 32;
     const MAX_TEMP = 36;
@@ -36,7 +49,7 @@ const HiveCard = ({
     const MAX_HUMIDITY = 70;
 
     if (Temperature === null || Humidity === null) {
-      onHealthStatusChange("No Data")
+      onHealthStatusChange("No Data");
       return "No Data";
     }
 
@@ -46,42 +59,69 @@ const HiveCard = ({
       Humidity >= MIN_HUMIDITY &&
       Humidity <= MAX_HUMIDITY
     ) {
-      onHealthStatusChange("Healthy")
+      onHealthStatusChange("Healthy");
       return "Healthy";
     }
-    onHealthStatusChange("Unhealthy")
+    onHealthStatusChange("Unhealthy");
 
     return "Unhealthy";
   };
-   useEffect(() => {
-      const sendHiveState = async () => {
-        try {
-          await fetch('http://localhost:5000/admin/insertState', {
-          method: 'POST',
-           headers: {
-           'Content-Type': 'application/json'
-           },
-            body: JSON.stringify({
-            healthStatus, id
-          })
+  useEffect(() => {
+    const sendHiveState = async () => {
+      try {
+        await fetch("http://localhost:5000/admin/insertState", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            healthStatus,
+            id,
+          }),
         });
-        } catch (err) {
-          console.error("Error fetching data:", err);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      }
+    };
+    sendHiveState();
+  }, [healthStatus, id]);
+  useEffect(() => {
+    const fetchLocation = async () => {
+      try {
+        // Make sure sensorData has at least one entry
+        const response = await fetch(
+          `http://localhost:5000/admin/getHiveLocation?latitude=${Latitude}&longitude=${Longitude}`
+        );
+        const locationData = await response.json();
+        setSensorLocation(locationData.city);
+        if (
+          Latitude !== null &&
+          Longitude !== null &&
+          locationData.city !== Location
+        ) {
+          GpsErrorHandler(id, hiveName);
         }
-      };
-      sendHiveState();
-    }, [healthStatus, id]);
+      } catch (error) {
+        console.error("Error fetching location:", error);
+      }
+    };
+
+    fetchLocation();
+  }, [Latitude, Longitude]); // Re-run when sensorData changes
+
   return (
     <Card
       extra={`flex flex-col w-full h-full !p-4 3xl:p-![18px] bg-white ${extra}`}
     >
       <div className="h-full w-full">
         <div className="relative w-full">
-          <img
-            src={image}
-            className="mb-3 h-full w-full rounded-xl 3xl:h-full 3xl:w-full"
-            alt=""
-          />
+          <div className="relative mb-3 h-38 w-full overflow-hidden rounded-xl">
+            <img
+              src={image}
+              className="h-full w-full object-cover"
+              alt={`Hive ${hiveName}`} // Always use meaningful alt text
+            />
+          </div>
           <button
             onClick={() => setHeart(!heart)}
             className="absolute right-3 top-3 flex items-center justify-center rounded-full bg-white p-2 text-brand-500 hover:cursor-pointer"
@@ -129,25 +169,36 @@ const HiveCard = ({
               )}
             </p>
           </div>
-          <div className="flex">
-            <p className="text-grey-500 mb-2 text-sm font-bold dark:text-white">
-              <MapIcon /> Location: {Location}
-            </p>
+          <div className="text-grey-500 mb-2 flex items-center text-sm font-bold dark:text-white">
+            <MapIcon className="mr-1" />
+            <span>
+              Location:{" "}
+              {Latitude && Longitude ? sensorLocation : "Waiting For Gps..."}
+            </span>
+            {Latitude && Longitude && (
+              <MdGpsFixed
+                style={{
+                  color: isRed ? "red" : "white",
+                  transition: "color 0.3s ease",
+                  marginLeft: "0.5rem",
+                }}
+              />
+            )}
           </div>
           <div className="flex">
             <p className="mb-2 text-sm font-bold dark:text-white">
               {healthStatus === "Healthy" ? (
                 <span className="text-green-500">
-                  <GppGoodIcon /> State: Healthy 
-                </span> 
-              )  : healthStatus === "Unhealthy" ? (
+                  <GppGoodIcon /> State: Healthy
+                </span>
+              ) : healthStatus === "Unhealthy" ? (
                 <span className="text-orange-500">
-                  <GppBadIcon /> State: Unhealthy 
-                </span> 
+                  <GppBadIcon /> State: Unhealthy
+                </span>
               ) : (
                 <span className="text-gray-500">
-                  <GppMaybeIcon /> State: No Data 
-                </span> 
+                  <GppMaybeIcon /> State: No Data
+                </span>
               )}
             </p>
           </div>
@@ -155,10 +206,12 @@ const HiveCard = ({
             Last data {lastDataR}
           </p>
           <button
-           onClick={async () => {
-           await fetch("http://localhost:5000/admin/detailed-dashboard/"+id);
-          window.location.href = link;
-}}
+            onClick={async () => {
+              await fetch(
+                "http://localhost:5000/admin/detailed-dashboard/" + id
+              );
+              window.location.href = link;
+            }}
             className="linear rounded-[20px] bg-brand-900 px-4 py-2 text-base font-medium text-white transition duration-200 hover:bg-brand-800 active:bg-brand-700 dark:bg-brand-400 dark:hover:bg-brand-300 dark:active:opacity-90"
           >
             More Detail

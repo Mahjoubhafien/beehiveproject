@@ -7,6 +7,8 @@ import Alert from "@mui/material/Alert";
 import HivesSummary from "./components/HivesSummary.jsx";
 
 const AllHives = () => {
+  const [isGPSCorrect, setIsGPSCorrect] = useState(true);
+    const [hiveWorngGps, setHiveWorngGps] = useState([]);
   const [listOfHives, setlistOfHives] = useState([]);
   const [isSlideclicked, setSladeState] = useState(false);
   const [isHiveAdded, setisHiveAdded] = useState(false);
@@ -129,8 +131,34 @@ const [healthCounts, setHealthCounts] = useState({
       // You might want to show an error alert here
     }
   }
+  function GpsErrorHandler(id,hiveName){
+    console.log("gps error from sensor =>"+id+" hive name:"+hiveName);
+    setIsGPSCorrect(false);
+setHiveWorngGps((prevValue) => [
+    ...prevValue,
+    { id, hiveName }
+  ]);  }
+  const formatTimestamp = (isoString) => {
+  const date = new Date(isoString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  
+  return `${year}-${month}-${day} ${hours}:${minutes}`;
+};
   return (
     <div>
+<div>
+  {!isGPSCorrect && hiveWorngGps.length > 0 ? (
+    <Alert variant="filled" severity="error" className="mt-3">
+      GPS Error in hive(s):{" "}
+      {hiveWorngGps.map(hive => `${hive.hiveName} (ID: ${hive.id})`).join(', ')}
+    </Alert>
+  ) : null}
+</div>
+      
       <div className="flex items-center justify-center mt-5">
         <HivesSummary totalHive={listOfHives.length} healthyHives={healthCounts.healthy} unhealthyHives={healthCounts.unhealthy}
           noDataHives={healthCounts.noData}
@@ -160,12 +188,15 @@ const [healthCounts, setHealthCounts] = useState({
             key={index}
             id={hive.id}
             hiveName={hive.hiveName}
-            image={BEE1}
+            image={hive.image_url ? `${"http://localhost:5000"}${hive.image_url}` : BEE1 }
             Temperature={hive.temperature}
             Humidity={hive.humidity}
             Location={hive.location} //
-            lastDataR={hive.lastDataR}
+            Longitude={hive.longitude} //
+            Latitude={hive.latitude} //
+            lastDataR={formatTimestamp(hive.lastDataR)}
             onHealthStatusChange={updateHealthCounts}
+            GpsErrorHandler={GpsErrorHandler}
             link="detailed-dashboard"
           />
         ))}

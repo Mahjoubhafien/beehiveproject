@@ -10,7 +10,7 @@ import {
   IoMdNotificationsOutline,
   IoMdInformationCircleOutline,
 } from "react-icons/io";
-import avatar from "assets/img/avatars/avatar4.png";
+import avatar from "assets/img/avatars/avatar9.png";
 
 const Navbar = (props) => {
   const { onOpenSidenav, brandText } = props;

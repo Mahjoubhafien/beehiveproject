@@ -18,14 +18,14 @@ const Item = styled(Paper)(({ theme }) => ({
 }));
 
 function HivesSummary(props) {
-    const [isRed, setIsRed] = useState(false);
-
+   // const [isRed, setIsRed] = useState(false);
+/*
   useEffect(() => {
     const interval = setInterval(() => {
       setIsRed(prev => !prev);
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, []);*/
 
   return (
     <div>
@@ -50,7 +50,7 @@ function HivesSummary(props) {
           No Data hive{" "}
           <span style={{ fontWeight: "bold" }}>{props.noDataHives}</span>
         </Item>
-        <Item style={{
+       {/* <Item style={{
       backgroundColor: "#00008B",
       color: "white",
       display: "flex",
@@ -62,7 +62,7 @@ function HivesSummary(props) {
         color: isRed ? 'red' : 'white',
         transition: 'color 0.3s ease'
       }} />
-    </Item>
+    </Item>*/}
       </Stack>
     </div>
   );

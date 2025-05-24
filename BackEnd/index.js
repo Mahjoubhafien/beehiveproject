@@ -3,8 +3,8 @@ import bodyParser from "body-parser";
 import pg from "pg";
 import cors from "cors";
 import axios from "axios";
-//import multer from 'multer';
-//import path from 'path';
+import multer from 'multer';
+import path from 'path';
 //import { fileURLToPath } from 'url';
 
 
@@ -29,7 +29,44 @@ app.use(cors()); // <---- Very important!
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
+// Configure storage
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/') // Make sure this directory exists
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname))
+  }
+});
+const upload = multer({ 
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'), false);
+    }
+  },
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
+});
+// Upload endpoint
+app.post('/admin/upload', upload.single('photo'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
 
+  // File uploaded successfully
+  res.json({
+    message: 'File uploaded successfully',
+    filePath: `/uploads/${req.file.filename}`,
+    originalName: req.file.originalname
+  });
+});
+// Serve uploaded files statically
+app.use('/uploads', express.static('uploads'))
 /*
 Getting sensor data
 */
@@ -101,6 +138,7 @@ try {
         b.sensor_id AS id,
         b.hive_name AS "hiveName",
         b.hive_location AS location,
+        b.image_url,
         sd.temperature,
         sd.humidity,
         sd.timestamp AS "lastDataR",
