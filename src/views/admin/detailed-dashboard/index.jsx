@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from "react";
 import MiniCalendar from "components/calendar/MiniCalendar";
-import WeeklyRevenue from "views/admin/detailed-dashboard/components/WeeklyRevenue";
-import TotalSpent from "views/admin/detailed-dashboard/components/TotalSpent";
 import PieChartCard from "views/admin/detailed-dashboard/components/PieChartCard";
 import Chart from "./components/TempHumChart";
 import { FaTemperatureQuarter } from "react-icons/fa6";
@@ -15,7 +13,9 @@ import { MdSensors } from "react-icons/md";
 import Alert from "@mui/material/Alert";
 import CloseIcon from "@mui/icons-material/Close";
 import IconButton from "@mui/material/IconButton";
-
+import MapComponent from "./components/GpsMap";
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
 
 
 import { columnsDataCheck, columnsDataComplex } from "./variables/columnsData";
@@ -121,7 +121,11 @@ const Dashboard = () => {
         />
         <Widget
           bg_color={
-            latestSensor ? (isWarningOn ? "!bg-red-100" : "!bg-green-100") : null
+            latestSensor
+              ? isWarningOn
+                ? "!bg-red-100"
+                : "!bg-green-100"
+              : null
           }
           icon={<GppGoodIcon className="h-7 w-7" />}
           title={"State"}
@@ -142,46 +146,62 @@ const Dashboard = () => {
       </div>*/}
 
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-        <Chart allSensorData={allSensorData}/>
-        <WeeklyRevenue />
-
-      </div>
-
-
-      {/* Tables & Charts */}
-
-      <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-2">
-        {/* Check Table */}
-        <div>
-          <CheckTable
-            columnsData={columnsDataCheck}
-            tableData={tableDataCheck}
+        <Chart allSensorData={allSensorData} />
+        {latestSensor ? (
+          <MapComponent
+            lat={latestSensor.latitude}
+            lng={latestSensor.longitude}
           />
-        </div>
-
-        {/* Traffic chart & Pie Chart */}
-
-        <div className="grid grid-cols-1 gap-5 rounded-[20px] md:grid-cols-2">
-          <DailyTraffic />
-          <PieChartCard />
-        </div>
-
-        {/* Complex Table , Task & Calendar */}
-
-        <ComplexTable
-          columnsData={columnsDataComplex}
-          tableData={tableDataComplex}
-        />
-
-        {/* Task chart & Calendar */}
-
-        <div className="grid grid-cols-1 gap-5 rounded-[20px] md:grid-cols-2">
-          <TaskCard />
-          <div className="grid grid-cols-1 rounded-[20px]">
-            <MiniCalendar />
-          </div>
-        </div>
+        ) : (
+          <div><Box 
+  sx={{ 
+    display: 'flex',
+    justifyContent: 'center', // horizontal centering
+    alignItems: 'center',    // vertical centering
+    height: '100%'           // takes full height of parent
+  }}
+>
+  <CircularProgress />
+</Box>
+    </div>
+        )}
       </div>
+      
+{/* Tables & Charts - Entire Section Commented Out
+<div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-2">
+  {/* Check Table * /}
+  <div>
+    <CheckTable
+      columnsData={columnsDataCheck}
+      tableData={tableDataCheck}
+    />
+  </div>
+
+  {/* Traffic chart & Pie Chart * /}
+
+  <div className="grid grid-cols-1 gap-5 rounded-[20px] md:grid-cols-2">
+    <DailyTraffic />
+    <PieChartCard />
+  </div>
+
+  {/* Complex Table, Task & Calendar * /}
+
+  <ComplexTable
+    columnsData={columnsDataComplex}
+    tableData={tableDataComplex}
+  />
+
+  {/* Task chart & Calendar * /}
+
+  <div className="grid grid-cols-1 gap-5 rounded-[20px] md:grid-cols-2">
+    <TaskCard />
+    <div className="grid grid-cols-1 rounded-[20px]">
+      <MiniCalendar />
+    </div>
+  </div>
+</div>
+*/}
+      
     </div>
   );
 };
