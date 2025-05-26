@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import HiveCard from "./components/HiveCard.jsx";
 import AddHiveArea from "./components/AddHiveArea.jsx";
-import BEE1 from "assets/img/beehive/bee1.png";
+import BEE1 from "assets/img/beehive/bee5.jpg";
 import AddHiveButton from "./components/AddHiveButton.jsx";
 import Alert from "@mui/material/Alert";
 import HivesSummary from "./components/HivesSummary.jsx";

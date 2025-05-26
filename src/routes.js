@@ -36,10 +36,10 @@ const routes = [
     component: <MainDashboard />,
   },
   {
-    name: "Data Tables",
+    name: "Settings",
     layout: "/admin",
     icon: <MdBarChart className="h-6 w-6" />,
-    path: "data-tables",
+    path: "Settings",
     component: <DataTables />,
   },
   {

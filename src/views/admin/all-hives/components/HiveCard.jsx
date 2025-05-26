@@ -8,6 +8,9 @@ import GppBadIcon from "@mui/icons-material/GppBad";
 import GppMaybeIcon from "@mui/icons-material/GppMaybe";
 import MapIcon from "@mui/icons-material/Map";
 import { MdGpsFixed } from "react-icons/md";
+import SensorsIcon from "@mui/icons-material/Sensors";
+import SensorsOffIcon from "@mui/icons-material/SensorsOff";
+import Tooltip from '@mui/material/Tooltip';
 
 const HiveCard = ({
   hiveName,
@@ -114,26 +117,37 @@ const HiveCard = ({
       extra={`flex flex-col w-full h-full !p-4 3xl:p-![18px] bg-white ${extra}`}
     >
       <div className="h-full w-full">
-        <div className="relative w-full">
-          <div className="relative mb-3 h-38 w-full overflow-hidden rounded-xl">
-            <img
-              src={image}
-              className="h-full w-full object-cover"
-              alt={`Hive ${hiveName}`} // Always use meaningful alt text
-            />
-          </div>
-          <button
-            onClick={() => setHeart(!heart)}
-            className="absolute right-3 top-3 flex items-center justify-center rounded-full bg-white p-2 text-brand-500 hover:cursor-pointer"
-          >
-            <div className="flex h-full w-full items-center justify-center rounded-full text-xl hover:bg-gray-50 dark:text-navy-900">
-              {heart ? (
-                <IoHeartOutline />
+        <div className="absolute right-0 top-0 flex items-center justify-center rounded-full bg-white">
+            <div className="flex h-full w-full items-center justify-center rounded-full">
+              {!(healthStatus === "No Data") ? (
+                <Tooltip title="Connected" arrow>
+          <SensorsIcon style={{ color: "green" }} />
+        </Tooltip>
               ) : (
-                <IoHeart className="text-brand-500" />
+                <Tooltip title="Disconnected" arrow>
+          <SensorsOffIcon style={{ color: "red" }} />
+        </Tooltip>
               )}
             </div>
-          </button>
+          </div>
+        <div className="relative w-full">
+          <div className="h-36 relative mb-1 w-full overflow-hidden rounded-xl">
+            <button
+              onClick={async () => {
+                await fetch(
+                  "http://localhost:5000/admin/detailed-dashboard/" + id
+                );
+                window.location.href = link;
+              }}
+              className="group overflow-hidden" // Added overflow-hidden to contain the scaled image
+            >
+              <img
+                src={image}
+                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                alt={`Hive ${hiveName}`}
+              />
+            </button>
+          </div>
         </div>
 
         <div className="mb-3 flex items-center justify-between px-1 md:flex-col md:items-start lg:flex-row lg:justify-between xl:flex-col xl:items-start 3xl:flex-row 3xl:justify-between">
@@ -176,13 +190,13 @@ const HiveCard = ({
               {Latitude && Longitude ? sensorLocation : "Waiting For Gps..."}
             </span>
             {Latitude && Longitude && (
-              <MdGpsFixed
+             <Tooltip title="Real Time Location" arrow>  <MdGpsFixed
                 style={{
                   color: isRed ? "red" : "white",
                   transition: "color 0.3s ease",
                   marginLeft: "0.5rem",
                 }}
-              />
+              /></Tooltip>
             )}
           </div>
           <div className="flex">
