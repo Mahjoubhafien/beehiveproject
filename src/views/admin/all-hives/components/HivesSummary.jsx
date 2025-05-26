@@ -35,19 +35,19 @@ function HivesSummary(props) {
         spacing={2}
       >
         <Item style={{ backgroundColor: "#1976d2", color: "white" }}>
-          Total Hive{" "}
+          Total Hives{" "}
           <span style={{ fontWeight: "bold" }}>{props.totalHive}</span>
         </Item>
         <Item style={{ backgroundColor: "#2e7d32", color: "white" }}>
-          Healthy Hive{" "}
+          Healthy Hives{" "}
           <span style={{ fontWeight: "bold" }}>{props.healthyHives}</span>
         </Item>
         <Item style={{ backgroundColor: "#d32f2f", color: "white" }}>
-          Unhealthy Hive{" "}
+          Unhealthy Hives{" "}
           <span style={{ fontWeight: "bold" }}>{props.unhealthyHives}</span>{" "}
         </Item>
         <Item style={{ backgroundColor: "#616161", color: "white" }}>
-          No Data hive{" "}
+          No Data hives{" "}
           <span style={{ fontWeight: "bold" }}>{props.noDataHives}</span>
         </Item>
        {/* <Item style={{

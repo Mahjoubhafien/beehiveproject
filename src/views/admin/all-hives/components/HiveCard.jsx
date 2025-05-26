@@ -12,6 +12,7 @@ import SensorsIcon from "@mui/icons-material/Sensors";
 import SensorsOffIcon from "@mui/icons-material/SensorsOff";
 import Tooltip from "@mui/material/Tooltip";
 import { FaEdit } from "react-icons/fa";
+import BasicTextFields from "./TextField.jsx";
 
 const HiveCard = ({
   hiveName,
@@ -120,6 +121,7 @@ const HiveCard = ({
       <div className="h-full w-full">
         <div className="relative w-full">
           <div className="relative mb-1 h-36 w-full overflow-hidden rounded-xl">
+            {/*    Image Field */}
             <button
               onClick={async () => {
                 await fetch(
@@ -135,13 +137,17 @@ const HiveCard = ({
                 alt={`Hive ${hiveName}`}
               />
             </button>
-            {/*    edit   */}
+            {/*    Edit Button  */}
             <button
               onClick={() => setIsEditButtenPresed(!IsEditButtenPresed)}
               className="absolute right-1 top-1 flex items-center justify-center rounded-full bg-white bg-opacity-80 p-2 text-brand-500 transition-all duration-200 hover:cursor-pointer hover:bg-opacity-100"
             >
               <div className="flex h-full w-full items-center justify-center rounded-full text-xl hover:bg-gray-50 dark:text-navy-900">
-                {IsEditButtenPresed ? <FaEdit /> : <FaEdit className="text-brand-500" />}
+                {IsEditButtenPresed ? (
+                  <FaEdit />
+                ) : (
+                  <FaEdit className="text-brand-500" />
+                )}
               </div>
             </button>
             {/**/}
@@ -150,86 +156,137 @@ const HiveCard = ({
 
         <div className="mb-3 flex items-center justify-between px-1 md:flex-col md:items-start lg:flex-row lg:justify-between xl:flex-col xl:items-start 3xl:flex-row 3xl:justify-between">
           <div className="mb-1">
-            <p className="flex items-center gap-2 text-lg font-bold text-navy-700 dark:text-white">
-              {hiveName}
-              <div className="flex items-center justify-center rounded-full">
-                {!(healthStatus === "No Data") ? (
-                  <Tooltip title="Connected" arrow>
-                    <SensorsIcon style={{ color: "green" }} />
-                  </Tooltip>
+            {/*    Name Field + the editin fiels text */}
+            <div className="flex w-full items-center gap-2 text-lg font-bold text-navy-700 dark:text-white">
+              <div
+                className={`flex-grow ${IsEditButtenPresed ? "max-w-xs" : ""}`}
+              >
+                {IsEditButtenPresed ? (
+                  <div>
+                    <BasicTextFields
+                      className="w-full rounded-md px-2 py-1"
+                      label="New Hive Name"
+                    />
+
+                    <BasicTextFields
+                      className="w-full rounded-md px-2 py-1"
+                      label="New Sensor Id"
+                    />
+
+                    <BasicTextFields
+                      className="w-full rounded-md px-2 py-1"
+                      label="New Hive Location"
+                    />
+
+                    <div className="mt-4 flex justify-center">
+                      <button className="rounded-full bg-green-500 px-5 py-3 text-base font-medium text-white transition duration-200 hover:bg-green-600 active:bg-green-700 dark:bg-green-400 dark:text-white dark:hover:bg-green-300 dark:active:bg-green-200">
+                        SAVE
+                      </button>
+                    </div>
+                  </div>
                 ) : (
-                  <Tooltip title="Disconnected" arrow>
-                    <SensorsOffIcon style={{ color: "red" }} />
-                  </Tooltip>
+                  <span>{hiveName}</span>
                 )}
               </div>
-            </p>
-            <p className="mt-1 text-sm font-medium text-gray-600 md:mt-0">
-              id {id}{" "}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between md:flex-col md:items-start lg:flex-row lg:justify-between xl:flex-col 2xl:items-start 3xl:flex-row 3xl:items-center 3xl:justify-between">
-          <div className="flex">
-            <p className="mb-2 text-sm font-bold text-red-500 dark:text-white">
-              <DeviceThermostatIcon /> Temperature:{" "}
-              {Temperature !== null ? (
-                <span>{Temperature} °C</span>
-              ) : (
-                <span style={{ color: "grey" }}>Waiting for data...</span>
+              {!IsEditButtenPresed && (
+                <div className="flex flex-shrink-0 items-center justify-center rounded-full">
+                  {healthStatus !== "No Data" ? (
+                    <Tooltip title="Connected" arrow>
+                      <SensorsIcon style={{ color: "green" }} />
+                    </Tooltip>
+                  ) : (
+                    <Tooltip title="Disconnected" arrow>
+                      <SensorsOffIcon style={{ color: "red" }} />
+                    </Tooltip>
+                  )}
+                </div>
               )}
-            </p>
-          </div>
-          <div className="flex">
-            <p className="mb-2 text-sm font-bold text-blue-500 dark:text-white">
-              <WaterDropIcon /> Humidity:{" "}
-              {Humidity !== null ? (
-                <span>{Humidity} %</span>
-              ) : (
-                <span style={{ color: "grey" }}>Waiting for data...</span>
-              )}
-            </p>
-          </div>
-          <div className="text-grey-500 mb-2 flex items-center text-sm font-bold dark:text-white">
-            <MapIcon className="mr-1" />
-            <span>
-              Location:{" "}
-              {Latitude && Longitude ? sensorLocation : "Waiting For GPS..."}
-            </span>
-            {Latitude && Longitude && (
-              <Tooltip title="Real Time Location" arrow>
-                {" "}
-                <MdGpsFixed
-                  style={{
-                    color: isRed ? "red" : "white",
-                    transition: "color 0.3s ease",
-                    marginLeft: "0.5rem",
-                  }}
-                />
-              </Tooltip>
+            </div>
+            {/*    Id Field */}
+            {IsEditButtenPresed ? null : (
+              <p className="mt-1 text-sm font-medium text-gray-600 md:mt-0">
+                id {id}
+              </p>
             )}
           </div>
-          <div className="flex">
-            <p className="mb-2 text-sm font-bold dark:text-white">
-              {healthStatus === "Healthy" ? (
-                <span className="text-green-500">
-                  <GppGoodIcon /> State: Healthy
-                </span>
-              ) : healthStatus === "Unhealthy" ? (
-                <span className="text-orange-500">
-                  <GppBadIcon /> State: Unhealthy
-                </span>
-              ) : (
-                <span className="text-gray-500">
-                  <GppMaybeIcon /> State: No Data
-                </span>
+        </div>
+        {/*    Temperature Field */}
+
+        <div className="flex items-center justify-between md:flex-col md:items-start lg:flex-row lg:justify-between xl:flex-col 2xl:items-start 3xl:flex-row 3xl:items-center 3xl:justify-between">
+          {!IsEditButtenPresed ? (
+            <div className="flex">
+              <p className="mb-2 text-sm font-bold text-red-500 dark:text-white">
+                <DeviceThermostatIcon /> Temperature:{" "}
+                {Temperature !== null ? (
+                  <span>{Temperature} °C</span>
+                ) : (
+                  <span style={{ color: "grey" }}>Waiting for data...</span>
+                )}
+              </p>
+            </div>
+          ) : null}
+
+          {/*    Humidity Field */}
+          {!IsEditButtenPresed ? (
+            <div className="flex">
+              <p className="mb-2 text-sm font-bold text-blue-500 dark:text-white">
+                <WaterDropIcon /> Humidity:{" "}
+                {Humidity !== null ? (
+                  <span>{Humidity} %</span>
+                ) : (
+                  <span style={{ color: "grey" }}>Waiting for data...</span>
+                )}
+              </p>
+            </div>
+          ) : null}
+          {/*    GPS Field */}
+          {!IsEditButtenPresed ? (
+            <div className="text-grey-500 mb-2 flex items-center text-sm font-bold dark:text-white">
+              <MapIcon className="mr-1" />
+              <span>
+                Location:{" "}
+                {Latitude && Longitude ? sensorLocation : "Waiting For GPS..."}
+              </span>
+              {Latitude && Longitude && (
+                <Tooltip title="Real Time Location" arrow>
+                  {" "}
+                  <MdGpsFixed
+                    style={{
+                      color: isRed ? "red" : "white",
+                      transition: "color 0.3s ease",
+                      marginLeft: "0.5rem",
+                    }}
+                  />
+                </Tooltip>
               )}
+            </div>
+          ) : null}
+          {/*    STATE Field */}
+          {!IsEditButtenPresed ? (
+            <div className="flex">
+              <p className="mb-2 text-sm font-bold dark:text-white">
+                {healthStatus === "Healthy" ? (
+                  <span className="text-green-500">
+                    <GppGoodIcon /> State: Healthy
+                  </span>
+                ) : healthStatus === "Unhealthy" ? (
+                  <span className="text-orange-500">
+                    <GppBadIcon /> State: Unhealthy
+                  </span>
+                ) : (
+                  <span className="text-gray-500">
+                    <GppMaybeIcon /> State: No Data
+                  </span>
+                )}
+              </p>
+            </div>
+          ) : null}
+          {/*    Last Data Received Field */}
+          {!IsEditButtenPresed ? (
+            <p className="mb-1 text-sm font-medium text-gray-600 md:mt-2">
+              Last data {lastDataR}
             </p>
-          </div>
-          <p className="mb-1 text-sm font-medium text-gray-600 md:mt-2">
-            Last data {lastDataR}
-          </p>
+          ) : null}
           {/*<button
             onClick={async () => {
               await fetch(
