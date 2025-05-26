@@ -179,7 +179,7 @@ const HiveCard = ({
                     />
 
                     <div className="mt-4 flex justify-center">
-                      <button className="rounded-full bg-green-500 px-5 py-3 text-base font-medium text-white transition duration-200 hover:bg-green-600 active:bg-green-700 dark:bg-green-400 dark:text-white dark:hover:bg-green-300 dark:active:bg-green-200">
+                      <button onClick={() => {setIsEditButtenPresed(!IsEditButtenPresed)}} className="rounded-full bg-green-500 px-5 py-3 text-base font-medium text-white transition duration-200 hover:bg-green-600 active:bg-green-700 dark:bg-green-400 dark:text-white dark:hover:bg-green-300 dark:active:bg-green-200">
                         SAVE
                       </button>
                     </div>
