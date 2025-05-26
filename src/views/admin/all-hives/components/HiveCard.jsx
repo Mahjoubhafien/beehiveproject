@@ -10,7 +10,8 @@ import MapIcon from "@mui/icons-material/Map";
 import { MdGpsFixed } from "react-icons/md";
 import SensorsIcon from "@mui/icons-material/Sensors";
 import SensorsOffIcon from "@mui/icons-material/SensorsOff";
-import Tooltip from '@mui/material/Tooltip';
+import Tooltip from "@mui/material/Tooltip";
+import { FaEdit } from "react-icons/fa";
 
 const HiveCard = ({
   hiveName,
@@ -27,7 +28,7 @@ const HiveCard = ({
   GpsErrorHandler,
   extra,
 }) => {
-  const [heart, setHeart] = useState(true);
+  const [IsEditButtenPresed, setIsEditButtenPresed] = useState(false);
   const [healthStatus, setHealthStatus] = useState("Checking...");
   const [sensorLocation, setSensorLocation] = useState("");
   const [isRed, setIsRed] = useState(false);
@@ -117,21 +118,8 @@ const HiveCard = ({
       extra={`flex flex-col w-full h-full !p-4 3xl:p-![18px] bg-white ${extra}`}
     >
       <div className="h-full w-full">
-        <div className="absolute right-0 top-0 flex items-center justify-center rounded-full bg-white">
-            <div className="flex h-full w-full items-center justify-center rounded-full">
-              {!(healthStatus === "No Data") ? (
-                <Tooltip title="Connected" arrow>
-          <SensorsIcon style={{ color: "green" }} />
-        </Tooltip>
-              ) : (
-                <Tooltip title="Disconnected" arrow>
-          <SensorsOffIcon style={{ color: "red" }} />
-        </Tooltip>
-              )}
-            </div>
-          </div>
         <div className="relative w-full">
-          <div className="h-36 relative mb-1 w-full overflow-hidden rounded-xl">
+          <div className="relative mb-1 h-36 w-full overflow-hidden rounded-xl">
             <button
               onClick={async () => {
                 await fetch(
@@ -147,14 +135,34 @@ const HiveCard = ({
                 alt={`Hive ${hiveName}`}
               />
             </button>
+            {/*    edit   */}
+            <button
+              onClick={() => setIsEditButtenPresed(!IsEditButtenPresed)}
+              className="absolute right-1 top-1 flex items-center justify-center rounded-full bg-white bg-opacity-80 p-2 text-brand-500 transition-all duration-200 hover:cursor-pointer hover:bg-opacity-100"
+            >
+              <div className="flex h-full w-full items-center justify-center rounded-full text-xl hover:bg-gray-50 dark:text-navy-900">
+                {IsEditButtenPresed ? <FaEdit /> : <FaEdit className="text-brand-500" />}
+              </div>
+            </button>
+            {/**/}
           </div>
         </div>
 
         <div className="mb-3 flex items-center justify-between px-1 md:flex-col md:items-start lg:flex-row lg:justify-between xl:flex-col xl:items-start 3xl:flex-row 3xl:justify-between">
           <div className="mb-1">
-            <p className="text-lg font-bold text-navy-700 dark:text-white">
-              {" "}
-              {hiveName}{" "}
+            <p className="flex items-center gap-2 text-lg font-bold text-navy-700 dark:text-white">
+              {hiveName}
+              <div className="flex items-center justify-center rounded-full">
+                {!(healthStatus === "No Data") ? (
+                  <Tooltip title="Connected" arrow>
+                    <SensorsIcon style={{ color: "green" }} />
+                  </Tooltip>
+                ) : (
+                  <Tooltip title="Disconnected" arrow>
+                    <SensorsOffIcon style={{ color: "red" }} />
+                  </Tooltip>
+                )}
+              </div>
             </p>
             <p className="mt-1 text-sm font-medium text-gray-600 md:mt-0">
               id {id}{" "}
@@ -187,16 +195,19 @@ const HiveCard = ({
             <MapIcon className="mr-1" />
             <span>
               Location:{" "}
-              {Latitude && Longitude ? sensorLocation : "Waiting For Gps..."}
+              {Latitude && Longitude ? sensorLocation : "Waiting For GPS..."}
             </span>
             {Latitude && Longitude && (
-             <Tooltip title="Real Time Location" arrow>  <MdGpsFixed
-                style={{
-                  color: isRed ? "red" : "white",
-                  transition: "color 0.3s ease",
-                  marginLeft: "0.5rem",
-                }}
-              /></Tooltip>
+              <Tooltip title="Real Time Location" arrow>
+                {" "}
+                <MdGpsFixed
+                  style={{
+                    color: isRed ? "red" : "white",
+                    transition: "color 0.3s ease",
+                    marginLeft: "0.5rem",
+                  }}
+                />
+              </Tooltip>
             )}
           </div>
           <div className="flex">
@@ -219,7 +230,7 @@ const HiveCard = ({
           <p className="mb-1 text-sm font-medium text-gray-600 md:mt-2">
             Last data {lastDataR}
           </p>
-          <button
+          {/*<button
             onClick={async () => {
               await fetch(
                 "http://localhost:5000/admin/detailed-dashboard/" + id
@@ -229,7 +240,7 @@ const HiveCard = ({
             className="linear rounded-[20px] bg-brand-900 px-4 py-2 text-base font-medium text-white transition duration-200 hover:bg-brand-800 active:bg-brand-700 dark:bg-brand-400 dark:hover:bg-brand-300 dark:active:opacity-90"
           >
             More Detail
-          </button>
+          </button>*/}
         </div>
       </div>
     </Card>
