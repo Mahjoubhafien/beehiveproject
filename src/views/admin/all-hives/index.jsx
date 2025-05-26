@@ -19,6 +19,7 @@ const [healthCounts, setHealthCounts] = useState({
     unhealthy: 0,
     noData: 0
   });
+
   const updateHealthCounts = (status) => {
     setHealthCounts(prev => {
       const newCounts = {...prev};
@@ -41,6 +42,7 @@ const [healthCounts, setHealthCounts] = useState({
     };
     fetchHives();
   }, []);
+
   ///////////// notification area /////////////////
   useEffect(() => {
     if (isHiveAdded) {

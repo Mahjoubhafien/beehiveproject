@@ -59,29 +59,76 @@ export default function TempHumChart({ allSensorData = [] }) {
   };
   // Update chart options with dynamic categories
   const lineChartOptions = {
-    ...lineChartOptionsTotalSpent, // Spread the existing options
-    xaxis: {
-      ...lineChartOptionsTotalSpent.xaxis,
-      categories: prepareCategories(
-        currentSelectedData.length > 0
-          ? currentSelectedData
-          : allReading.slice(-24)
-      ),
-      labels: {
-        ...lineChartOptionsTotalSpent.xaxis.labels,
-        formatter: function (value) {
-          return value; // Use the formatted time string directly
+  ...lineChartOptionsTotalSpent, // Spread the existing options
+  chart: {
+    ...lineChartOptionsTotalSpent.chart,
+    toolbar: {
+      show: true,
+    },
+  },
+  xaxis: {
+    ...lineChartOptionsTotalSpent.xaxis,
+    categories: prepareCategories(
+      currentSelectedData.length > 0
+        ? currentSelectedData
+        : allReading.slice(-24)
+    ),
+    labels: {
+      ...lineChartOptionsTotalSpent.xaxis.labels,
+      formatter: function (value) {
+        return value; // Use the formatted time string directly
+      },
+    },
+    type: "category", // Better for time series
+  },
+  tooltip: {
+    ...lineChartOptionsTotalSpent.tooltip,
+    x: {
+      format: "dd/MM/yy HH:mm", // Keep detailed format in tooltip
+    },
+  },
+  yaxis: [
+    {
+      title: {
+        text: "Temperature (°C)",
+        style: {
+          color: "#D22B2B",
         },
       },
-      type: "category", // Better for time series
-    },
-    tooltip: {
-      ...lineChartOptionsTotalSpent.tooltip,
-      x: {
-        format: "dd/MM/yy HH:mm", // Keep detailed format in tooltip
+      labels: {
+        style: {
+          colors: "#D22B2B",
+        },
+        formatter: function (value) {
+          return value.toFixed(1); // Format temperature to 1 decimal place
+        },
       },
+      min: 0,
+      max: 50,
+      tickAmount: 5,
     },
-  };
+    {
+      opposite: true, // Place on the right side
+      title: {
+        text: "Humidity (%)",
+        style: {
+          color: "#6AD2FF",
+        },
+      },
+      labels: {
+        style: {
+          colors: "#6AD2FF",
+        },
+        formatter: function (value) {
+          return value.toFixed(1); // Format humidity to 1 decimal place
+        },
+      },
+      min: 0,
+      max: 100,
+      tickAmount: 5,
+    },
+  ],
+};
 
   ///Fetch button handler ///
   function fetchChartHandler() {

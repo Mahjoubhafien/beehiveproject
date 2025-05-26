@@ -16,17 +16,11 @@ import IconButton from "@mui/material/IconButton";
 import MapComponent from "./components/GpsMap";
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
+import MultipleSelectChip from "./components/Selecthive"
 
-
-import { columnsDataCheck, columnsDataComplex } from "./variables/columnsData";
 
 import Widget from "components/widget/Widget";
-import CheckTable from "views/admin/detailed-dashboard/components/CheckTable";
-import ComplexTable from "views/admin/detailed-dashboard/components/ComplexTable";
-import DailyTraffic from "views/admin/detailed-dashboard/components/DailyTraffic";
-import TaskCard from "views/admin/detailed-dashboard/components/TaskCard";
-import tableDataCheck from "./variables/tableDataCheck.json";
-import tableDataComplex from "./variables/tableDataComplex.json";
+
 
 const Dashboard = () => {
   const [allSensorData, setAllSensorData] = useState([]);
@@ -34,7 +28,43 @@ const Dashboard = () => {
   const [latestSensor, setLatestSensor] = useState();
   const [isWarningOn, setIsWarningOn] = useState(false);
   const [isCloseButtonPressed, setIsCloseButtonPressed] = useState(false);
+  const[allSensors, setAllSensors] = useState([]);
+  const[currentSensorId, setCurrentSensorId] = useState("Select Sensor");
+  const[IsNoDataWarning, setIsNoDataWarning] = useState(false);
 
+const updateSensorDataFromSelect = async () => {
+  try {
+        const response = await fetch(
+          "http://localhost:5000/admin/getCurrentSensorData"
+        );
+        const sensorData = await response.json();
+        const reponse = await fetch(
+          `http://localhost:5000/admin/getHiveLocation?latitude=${
+            sensorData[sensorData.length - 1].latitude
+          }&longitude=${sensorData[sensorData.length - 1].longitude}`
+        );
+        const location = await reponse.json();
+        setSensorLoation(location.city);
+        setAllSensorData(sensorData);
+        if (sensorData[sensorData.length - 1].hive_state === "Healthy") {
+          setIsWarningOn(false);
+          setIsNoDataWarning(false)
+        } else if (
+          sensorData[sensorData.length - 1].hive_state === "Unhealthy"
+        ) {
+          setIsWarningOn(true);
+          setIsNoDataWarning(false)
+        }else{
+          setIsNoDataWarning(true)
+        }
+        // Set the latest sensor value after data is fetched
+        if (sensorData.length > 0) {
+          setLatestSensor(sensorData[sensorData.length - 1]);
+        }
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      }
+};
   useEffect(() => {
     const fetchCurrentSensorData = async () => {
       try {
@@ -52,10 +82,14 @@ const Dashboard = () => {
         setAllSensorData(sensorData);
         if (sensorData[sensorData.length - 1].hive_state === "Healthy") {
           setIsWarningOn(false);
+          setIsNoDataWarning(false)
         } else if (
           sensorData[sensorData.length - 1].hive_state === "Unhealthy"
         ) {
           setIsWarningOn(true);
+          setIsNoDataWarning(false)
+        }else{
+          setIsNoDataWarning(true)
         }
         // Set the latest sensor value after data is fetched
         if (sensorData.length > 0) {
@@ -67,9 +101,43 @@ const Dashboard = () => {
     };
     fetchCurrentSensorData();
   }, []);
+ useEffect(() => {
+    const fetchSensorIds = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/admin/sensor-ids');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        const sensorIds = data.map(item => item.sensor_id);
+        setAllSensors(sensorIds);
+      } catch (error) {
+        console.error('Error fetching sensor IDs:', error);
+      }
+    };
+
+    fetchSensorIds();
+  }, []);
+  useEffect(() => {
+    const fetchCurrentSensorId = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/admin/current-sensor');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        setCurrentSensorId(data.currentSensorId);
+      } catch (error) {
+        console.error('Error fetching sensor IDs:', error);
+      }
+    };
+
+    fetchCurrentSensorId();
+  }, []);
   return (
     <div>
-      {latestSensor ? (
+      {latestSensor ? IsNoDataWarning ? <Alert variant="filled" severity="info" className="mt-5">
+ No data received for the sensor, Please check device power or network connection.</Alert>:(
         isWarningOn ? (
           <Alert variant="filled" severity="warning" className="mt-5">
             Alert: Signs of hive distress detected, check for queen loss or
@@ -94,7 +162,7 @@ const Dashboard = () => {
           )
         )
       ) : null}
-
+      <MultipleSelectChip  allSonsorsIds={allSensors} currentSensorId={currentSensorId} updateSensorDataFromSelect={updateSensorDataFromSelect}/>
       {/* Card widget */}
       <div className="mt-3 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-3 3xl:grid-cols-6">
         <Widget
@@ -121,12 +189,15 @@ const Dashboard = () => {
         />
         <Widget
           bg_color={
-            latestSensor
-              ? isWarningOn
-                ? "!bg-red-100"
-                : "!bg-green-100"
-              : null
-          }
+             latestSensor
+    ? isWarningOn
+      ? "!bg-red-100" // Warning state (red background)
+    : IsNoDataWarning
+      ? null // No data state (gray background)
+    : "!bg-green-100" // Normal state (green background)
+    : null // Fallback when no latestSensor (gray background)
+}
+
           icon={<GppGoodIcon className="h-7 w-7" />}
           title={"State"}
           subtitle={latestSensor ? latestSensor.hive_state : "Loading..."}

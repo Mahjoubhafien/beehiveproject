@@ -177,7 +177,7 @@ const HiveCard = ({
             <p className="mb-2 text-sm font-bold text-blue-500 dark:text-white">
               <WaterDropIcon /> Humidity:{" "}
               {Humidity !== null ? (
-                <span>{Humidity} °C</span>
+                <span>{Humidity} %</span>
               ) : (
                 <span style={{ color: "grey" }}>Waiting for data...</span>
               )}

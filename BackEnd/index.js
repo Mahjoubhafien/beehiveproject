@@ -12,7 +12,7 @@ import path from 'path';
 const app = express();
 const port = 5000;
 const currentUserId = 1;
-var currentSensorId = 0;
+var currentSensorId = "Select Sensor";
 // Use environment variables in production
 const OPENCAGE_API_KEY = '8ffd57fde73845da9e5dfba57abf2f2b'; // Replace with your key
 
@@ -193,6 +193,15 @@ try {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+app.get('/admin/sensor-ids', async (req, res) => {
+  try {
+    const result = await db.query('SELECT sensor_id FROM beehives');
+    res.json(result.rows); // sends array of { sensor_id: value }
+  } catch (err) {
+    console.error('Error fetching sensor_ids:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 app.get('/admin/getHiveLocation', async (req, res) => {
   const { latitude, longitude } = req.query;
 
@@ -250,6 +259,17 @@ app.post('/admin/insertState', async (req, res) => {
     console.error('DB error:', err);
     res.status(500).json({ error: 'Database update failed' });
   }
+});
+app.get('/admin/current-sensor', (req, res) => {
+  res.json({ currentSensorId });
+});
+app.post('/admin/update-current-sensor', (req, res) => {
+  const { id } = req.body;
+  if (!id) {
+    return res.status(400).json({ error: 'Sensor ID is required' });
+  }
+  currentSensorId = id;
+  res.json({ message: 'Current sensor ID updated', currentSensorId });
 });
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
