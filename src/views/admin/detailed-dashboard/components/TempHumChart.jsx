@@ -104,8 +104,8 @@ export default function TempHumChart({ allSensorData = [] }) {
         },
       },
       min: 0,
-      max: 50,
-      tickAmount: 5,
+      max: 100,
+      tickAmount: 10,
     },
     {
       opposite: true, // Place on the right side
@@ -125,7 +125,7 @@ export default function TempHumChart({ allSensorData = [] }) {
       },
       min: 0,
       max: 100,
-      tickAmount: 5,
+      tickAmount: 10,
     },
   ],
 };

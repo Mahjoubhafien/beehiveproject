@@ -27,12 +27,18 @@ const HiveCard = ({
   lastDataR,
   onHealthStatusChange,
   GpsErrorHandler,
+  editWarnnigHandler,
+  updateHivesCard,
   extra,
 }) => {
   const [IsEditButtenPresed, setIsEditButtenPresed] = useState(false);
   const [healthStatus, setHealthStatus] = useState("Checking...");
   const [sensorLocation, setSensorLocation] = useState("");
   const [isRed, setIsRed] = useState(false);
+
+  const [newHiveName, setNewHiveName] = useState("");
+  const [newSensorid, setNewSensorid] = useState("");
+  const [newHiveLocation, setNewHiveLocation] = useState("");
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -41,13 +47,10 @@ const HiveCard = ({
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    // Update health status whenever temperature or humidity changes
-    setHealthStatus(checkHiveHealth(Temperature, Humidity));
-  }, [Temperature, Humidity]);
+ 
 
+  useEffect(() => {
   const checkHiveHealth = (Temperature, Humidity) => {
-    // Define healthy ranges (adjust these values according to beekeeping standards)
     const MIN_TEMP = 32;
     const MAX_TEMP = 36;
     const MIN_HUMIDITY = 50;
@@ -68,9 +71,11 @@ const HiveCard = ({
       return "Healthy";
     }
     onHealthStatusChange("Unhealthy");
-
     return "Unhealthy";
   };
+
+  setHealthStatus(checkHiveHealth(Temperature, Humidity));
+}, [Temperature, Humidity]);
   useEffect(() => {
     const sendHiveState = async () => {
       try {
@@ -99,20 +104,51 @@ const HiveCard = ({
         );
         const locationData = await response.json();
         setSensorLocation(locationData.city);
-        if (
-          Latitude !== null &&
-          Longitude !== null &&
-          locationData.city !== Location
-        ) {
-          GpsErrorHandler(id, hiveName);
-        }
-      } catch (error) {
-        console.error("Error fetching location:", error);
-      }
-    };
+        const isCorrect =
+        Latitude !== null &&
+        Longitude !== null &&
+        locationData.city === Location;
 
-    fetchLocation();
-  }, [Latitude, Longitude]); // Re-run when sensorData changes
+      GpsErrorHandler(id, hiveName, isCorrect);
+    } catch (error) {
+      console.error("Error fetching location:", error);
+    }
+  };
+
+  fetchLocation();
+  }, [Latitude, Longitude, Location]); // Re-run when sensorData changes
+
+  //edit hive function
+  const editHiveHandler = async () => {
+    setIsEditButtenPresed(!IsEditButtenPresed);
+    try {
+      const response = await fetch("http://localhost:5000/admin/edit-hive", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          newHiveName,
+          newSensorid,
+          newHiveLocation,
+          id,
+        }),
+      });
+            const result = await response.json();
+
+      if (!response.ok) {
+        console.error("Server Error:", result.message);
+        editWarnnigHandler(result.message);
+        return;
+      }
+      setNewHiveLocation("");
+      setNewSensorid("");
+      setNewHiveName("");
+      updateHivesCard();
+    } catch (err) {
+      console.error("Error Updating  Hive:", err);
+    }
+  };
 
   return (
     <Card
@@ -166,20 +202,38 @@ const HiveCard = ({
                     <BasicTextFields
                       className="w-full rounded-md px-2 py-1"
                       label="New Hive Name"
+                      value={newHiveName}
+                      onChange={(e) => {
+                        const { value } = e.target;
+                        setNewHiveName(value);
+                      }}
                     />
 
                     <BasicTextFields
                       className="w-full rounded-md px-2 py-1"
                       label="New Sensor Id"
+                      value={newSensorid}
+                      onChange={(e) => {
+                        const { value } = e.target;
+                        setNewSensorid(value);
+                      }}
                     />
 
                     <BasicTextFields
                       className="w-full rounded-md px-2 py-1"
                       label="New Hive Location"
+                      value={newHiveLocation}
+                      onChange={(e) => {
+                        const { value } = e.target;
+                        setNewHiveLocation(value);
+                      }}
                     />
 
                     <div className="mt-4 flex justify-center">
-                      <button onClick={() => {setIsEditButtenPresed(!IsEditButtenPresed)}} className="rounded-full bg-green-500 px-5 py-3 text-base font-medium text-white transition duration-200 hover:bg-green-600 active:bg-green-700 dark:bg-green-400 dark:text-white dark:hover:bg-green-300 dark:active:bg-green-200">
+                      <button
+                        onClick={editHiveHandler}
+                        className="rounded-full bg-green-500 px-5 py-3 text-base font-medium text-white transition duration-200 hover:bg-green-600 active:bg-green-700 dark:bg-green-400 dark:text-white dark:hover:bg-green-300 dark:active:bg-green-200"
+                      >
                         SAVE
                       </button>
                     </div>

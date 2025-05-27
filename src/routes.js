@@ -21,7 +21,7 @@ import {
 
 const routes = [
   {
-    name: "All Hives",
+    name: "Hives",
     layout: "/admin",
     path: "all-hives",
     icon: <GiBeehive className="h-6 w-6" />,
@@ -29,7 +29,7 @@ const routes = [
     secondary: true,
   },
   {
-    name: "Detailed Dashboard",
+    name: "Dashboard",
     layout: "/admin",
     path: "detailed-dashboard",
     icon: <MdHome className="h-6 w-6" />,

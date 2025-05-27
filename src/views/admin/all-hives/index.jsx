@@ -14,12 +14,15 @@ const AllHives = () => {
   const [isHiveAdded, setisHiveAdded] = useState(false);
   const [isSensorIdNull, setIsSensorIdNull] = useState(false);
   const [isSensorIdAlreadyExist, setIsSensorIdAlreadyExist] = useState(false);
+  const [isHiveModified, setIsHiveModified] = useState(false);
 const [healthCounts, setHealthCounts] = useState({
     healthy: 0,
     unhealthy: 0,
     noData: 0
   });
+/* START WebSockets */
 
+/*END  WebSockets  */
   const updateHealthCounts = (status) => {
     setHealthCounts(prev => {
       const newCounts = {...prev};
@@ -29,20 +32,24 @@ const [healthCounts, setHealthCounts] = useState({
       return newCounts;
     });
   };
-  useEffect(() => {
-    const fetchHives = async () => {
-      try {
-        const response = await fetch("http://localhost:5000/admin/getAllHives");
-        const data = await response.json();
-        setlistOfHives(data);
-        console.log(listOfHives);
-      } catch (err) {
-        console.error("Error fetching data:", err);
-      }
-    };
-    fetchHives();
-  }, []);
+  /////// Fetch All Hives useEffect when a load the page////////
+ useEffect(() => {
+  const fetchHives = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/admin/getAllHives");
+      const data = await response.json();
+      setlistOfHives(data);
+    } catch (err) {
+      console.error("Error fetching data:", err);
+    }
+  };
 
+  fetchHives(); // initial load
+
+  const interval = setInterval(fetchHives, 2000); // re-fetch every 5 seconds
+
+  return () => clearInterval(interval); // cleanup on unmount
+}, []);
   ///////////// notification area /////////////////
   useEffect(() => {
     if (isHiveAdded) {
@@ -71,7 +78,15 @@ const [healthCounts, setHealthCounts] = useState({
       return () => clearTimeout(timer); // Cleanup on unmount
     }
   }, [isSensorIdAlreadyExist]); // Run effect when `isHiveAdded` changes
+useEffect(() => {
+    if (isHiveModified) {
+      const timer = setTimeout(() => {
+        setIsHiveModified(false); // Hide the alert after 3 seconds
+      }, 2000);
 
+      return () => clearTimeout(timer); // Cleanup on unmount
+    }
+  }, [isHiveModified]); // Run effect when `isHiveAdded` changes
   ///////////// END Notification area /////////////////
 
   function sliderHandler() {
@@ -133,13 +148,23 @@ const [healthCounts, setHealthCounts] = useState({
       // You might want to show an error alert here
     }
   }
-  function GpsErrorHandler(id,hiveName){
-    console.log("gps error from sensor =>"+id+" hive name:"+hiveName);
+  /// set the allert of GPS ////
+function GpsErrorHandler(id, hiveName, isCorrect) {
+  if (!isCorrect) {
+    console.log("GPS error from sensor => " + id + " hive name: " + hiveName);
     setIsGPSCorrect(false);
-setHiveWorngGps((prevValue) => [
-    ...prevValue,
-    { id, hiveName }
-  ]);  }
+    setHiveWorngGps((prevValue) => {
+      const alreadyExists = prevValue.some((hive) => hive.id === id);
+      if (alreadyExists) return prevValue;
+      return [...prevValue, { id, hiveName }];
+    });
+  } else {
+    // GPS is now correct → remove hive from error list
+    console.log("GPS corrected for hive: " + hiveName);
+    setIsGPSCorrect(true);
+    setHiveWorngGps((prevValue) => prevValue.filter((hive) => hive.id !== id));
+  }
+}  
   const formatTimestamp = (isoString) => {
   const date = new Date(isoString);
   const year = date.getFullYear();
@@ -149,6 +174,35 @@ setHiveWorngGps((prevValue) => [
   const minutes = String(date.getMinutes()).padStart(2, '0');
   
   return `${year}-${month}-${day} ${hours}:${minutes}`;
+};
+////// hive card edir sensor id empty ////
+function editWarnnigHandler(e)
+{
+  if(e === "Sensor ID already exists.")
+  {
+    setIsSensorIdAlreadyExist(true);
+  }
+    if(e === "Sensor ID cannot be empty.")
+  {
+    setIsSensorIdNull(true);
+  }
+    if(e === "Hive updated data received successfully")
+  {
+    setIsHiveModified(true);
+  }
+
+
+}
+///// update hives card after editing ////////
+ const updateHivesCard = async () => {
+  try {
+    const response = await fetch("http://localhost:5000/admin/getAllHives");
+    const data = await response.json();
+    setlistOfHives(data);
+    editWarnnigHandler("Hive updated data received successfully");
+  } catch (err) {
+    console.error("Error fetching data:", err);
+  }
 };
   return (
     <div>
@@ -183,7 +237,11 @@ setHiveWorngGps((prevValue) => [
           Sensor Id Already Exist !
         </Alert>
       ) : null}
-
+      {isHiveModified ? (
+        <Alert variant="filled" severity="success">
+          Hive Modified Succesfuly.
+        </Alert>
+      ) : null}
       <div className="z-20 grid grid-cols-1 gap-5 md:grid-cols-4">
         {listOfHives.map((hive, index) => (
           <HiveCard
@@ -199,6 +257,8 @@ setHiveWorngGps((prevValue) => [
             lastDataR={formatTimestamp(hive.lastDataR)}
             onHealthStatusChange={updateHealthCounts}
             GpsErrorHandler={GpsErrorHandler}
+            editWarnnigHandler={editWarnnigHandler}
+            updateHivesCard={updateHivesCard}
             link="detailed-dashboard"
           />
         ))}
