@@ -14,13 +14,11 @@ import Alert from "@mui/material/Alert";
 import CloseIcon from "@mui/icons-material/Close";
 import IconButton from "@mui/material/IconButton";
 import MapComponent from "./components/GpsMap";
-import CircularProgress from '@mui/material/CircularProgress';
-import Box from '@mui/material/Box';
-import MultipleSelectChip from "./components/Selecthive"
-
+import CircularProgress from "@mui/material/CircularProgress";
+import Box from "@mui/material/Box";
+import MultipleSelectChip from "./components/Selecthive";
 
 import Widget from "components/widget/Widget";
-
 
 const Dashboard = () => {
   const [allSensorData, setAllSensorData] = useState([]);
@@ -28,107 +26,152 @@ const Dashboard = () => {
   const [latestSensor, setLatestSensor] = useState();
   const [isWarningOn, setIsWarningOn] = useState(false);
   const [isCloseButtonPressed, setIsCloseButtonPressed] = useState(false);
-  const[allSensors, setAllSensors] = useState([]);
-  const[currentSensorId, setCurrentSensorId] = useState("Select Sensor");
-  const[IsNoDataWarning, setIsNoDataWarning] = useState(false);
+  const [allSensors, setAllSensors] = useState([]);
+  const [currentSensorId, setCurrentSensorId] = useState("Select Sensor");
+  const [IsNoDataWarning, setIsNoDataWarning] = useState(false);
+  const [hiveHealth, sethiveHealth] = useState("Checking");
 
-const updateSensorDataFromSelect = async () => {
-  try {
-        const response = await fetch(
-          "http://localhost:5000/admin/getCurrentSensorData"
-        );
-        const sensorData = await response.json();
-        const reponse = await fetch(
-          `http://localhost:5000/admin/getHiveLocation?latitude=${
-            sensorData[sensorData.length - 1].latitude
-          }&longitude=${sensorData[sensorData.length - 1].longitude}`
-        );
-        const location = await reponse.json();
-        setSensorLoation(location.city);
-        setAllSensorData(sensorData);
-        if (sensorData[sensorData.length - 1].hive_state === "Healthy") {
-          setIsWarningOn(false);
-          setIsNoDataWarning(false)
-        } else if (
-          sensorData[sensorData.length - 1].hive_state === "Unhealthy"
-        ) {
-          setIsWarningOn(true);
-          setIsNoDataWarning(false)
-        }else{
-          setIsNoDataWarning(true)
-        }
-        // Set the latest sensor value after data is fetched
-        if (sensorData.length > 0) {
-          setLatestSensor(sensorData[sensorData.length - 1]);
-        }
-      } catch (err) {
-        console.error("Error fetching data:", err);
+
+  /// This function called when we select another sensor frm the detailed dashboard page /////
+  const updateSensorDataFromSelect = async () => {
+    const MIN_TEMP = 32;
+    const MAX_TEMP = 36;
+    const MIN_HUMIDITY = 50;
+    const MAX_HUMIDITY = 70;
+
+    try {
+      const response = await fetch(
+        "http://localhost:5000/admin/getCurrentSensorData"
+      );
+      const sensorData = await response.json();
+      const latest = sensorData[sensorData.length - 1];
+      //return health no data when temp and hum null
+      if (!latest || latest.temperature == null || latest.humidity == null) {
+        setIsNoDataWarning(true);
+        sethiveHealth("No Data");
+        return;
       }
-};
+      const reponse = await fetch(
+        `http://localhost:5000/admin/getHiveLocation?latitude=${
+          sensorData[sensorData.length - 1].latitude
+        }&longitude=${sensorData[sensorData.length - 1].longitude}`
+      );
+      const location = await reponse.json();
+      setSensorLoation(location.city);
+      setAllSensorData(sensorData);
+      if (
+        sensorData[sensorData.length - 1].temperature >= MIN_TEMP &&
+        sensorData[sensorData.length - 1].temperature <= MAX_TEMP &&
+        sensorData[sensorData.length - 1].humidity >= MIN_HUMIDITY &&
+        sensorData[sensorData.length - 1].humidity <= MAX_HUMIDITY
+      ) {
+        sethiveHealth("Healthy");
+        setIsWarningOn(false);
+        setIsNoDataWarning(false);
+      } else {
+        sethiveHealth("Unhealthy");
+        setIsWarningOn(true);
+        setIsNoDataWarning(false);
+      }
+      // Set the latest sensor value after data is fetched
+      if (sensorData.length > 0) {
+        setLatestSensor(sensorData[sensorData.length - 1]);
+      }
+    } catch (err) {
+      console.error("Error fetching data:", err);
+    }
+  };
+  /////////// Fetch the selected Sensor data, repeated every second ( you can change it) ////////
   useEffect(() => {
     const fetchCurrentSensorData = async () => {
-      try {
-        const response = await fetch(
-          "http://localhost:5000/admin/getCurrentSensorData"
-        );
-        const sensorData = await response.json();
-        const reponse = await fetch(
-          `http://localhost:5000/admin/getHiveLocation?latitude=${
-            sensorData[sensorData.length - 1].latitude
-          }&longitude=${sensorData[sensorData.length - 1].longitude}`
-        );
-        const location = await reponse.json();
-        setSensorLoation(location.city);
-        setAllSensorData(sensorData);
-        if (sensorData[sensorData.length - 1].hive_state === "Healthy") {
-          setIsWarningOn(false);
-          setIsNoDataWarning(false)
-        } else if (
-          sensorData[sensorData.length - 1].hive_state === "Unhealthy"
-        ) {
-          setIsWarningOn(true);
-          setIsNoDataWarning(false)
-        }else{
-          setIsNoDataWarning(true)
-        }
-        // Set the latest sensor value after data is fetched
-        if (sensorData.length > 0) {
-          setLatestSensor(sensorData[sensorData.length - 1]);
-        }
-      } catch (err) {
-        console.error("Error fetching data:", err);
+      const MIN_TEMP = 32;
+    const MAX_TEMP = 36;
+    const MIN_HUMIDITY = 50;
+    const MAX_HUMIDITY = 70;
+
+    try {
+      const response = await fetch(
+        "http://localhost:5000/admin/getCurrentSensorData"
+      );
+      const sensorData = await response.json();
+      const latest = sensorData[sensorData.length - 1];
+      //return health no data when temp and hum null
+      if (!latest || latest.temperature == null || latest.humidity == null) {
+        setIsNoDataWarning(true);
+        sethiveHealth("No Data");
+        return;
       }
-    };
+      const reponse = await fetch(
+        `http://localhost:5000/admin/getHiveLocation?latitude=${
+          sensorData[sensorData.length - 1].latitude
+        }&longitude=${sensorData[sensorData.length - 1].longitude}`
+      );
+      const location = await reponse.json();
+      setSensorLoation(location.city);
+      setAllSensorData(sensorData);
+      if (
+        sensorData[sensorData.length - 1].temperature >= MIN_TEMP &&
+        sensorData[sensorData.length - 1].temperature <= MAX_TEMP &&
+        sensorData[sensorData.length - 1].humidity >= MIN_HUMIDITY &&
+        sensorData[sensorData.length - 1].humidity <= MAX_HUMIDITY
+      ) {
+        sethiveHealth("Healthy");
+        setIsWarningOn(false);
+        setIsNoDataWarning(false);
+      } else {
+        sethiveHealth("Unhealthy");
+        setIsWarningOn(true);
+        setIsNoDataWarning(false);
+      }
+      // Set the latest sensor value after data is fetched
+      if (sensorData.length > 0) {
+        setLatestSensor(sensorData[sensorData.length - 1]);
+      }
+    } catch (err) {
+      console.error("Error fetching data:", err);
+    }
+  };
     fetchCurrentSensorData();
+
+    // Set interval to fetch every second
+    const interval = setInterval(fetchCurrentSensorData, 1000);
+
+    // Clear interval on unmount
+    return () => clearInterval(interval);
   }, []);
- useEffect(() => {
+
+  //////// fetch all sensor id that i have, to select them in the detailed dashboard page /////////
+  useEffect(() => {
     const fetchSensorIds = async () => {
       try {
-        const response = await fetch('http://localhost:5000/admin/sensor-ids');
+        const response = await fetch("http://localhost:5000/admin/sensor-ids");
         if (!response.ok) {
-          throw new Error('Network response was not ok');
+          throw new Error("Network response was not ok");
         }
         const data = await response.json();
-        const sensorIds = data.map(item => item.sensor_id);
+        const sensorIds = data.map((item) => item.sensor_id);
         setAllSensors(sensorIds);
       } catch (error) {
-        console.error('Error fetching sensor IDs:', error);
+        console.error("Error fetching sensor IDs:", error);
       }
     };
 
     fetchSensorIds();
   }, []);
+
   useEffect(() => {
     const fetchCurrentSensorId = async () => {
       try {
-        const response = await fetch('http://localhost:5000/admin/current-sensor');
+        const response = await fetch(
+          "http://localhost:5000/admin/current-sensor"
+        );
         if (!response.ok) {
-          throw new Error('Network response was not ok');
+          throw new Error("Network response was not ok");
         }
         const data = await response.json();
         setCurrentSensorId(data.currentSensorId);
       } catch (error) {
-        console.error('Error fetching sensor IDs:', error);
+        console.error("Error fetching sensor IDs:", error);
       }
     };
 
@@ -136,9 +179,13 @@ const updateSensorDataFromSelect = async () => {
   }, []);
   return (
     <div>
-      {latestSensor ? IsNoDataWarning ? <Alert variant="filled" severity="info" className="mt-5">
- No data received for the sensor, Please check device power or network connection.</Alert>:(
-        isWarningOn ? (
+      {latestSensor ? (
+        IsNoDataWarning ? (
+          <Alert variant="filled" severity="info" className="mt-5">
+            No data received for the sensor, Please check device power or
+            network connection.
+          </Alert>
+        ) : isWarningOn ? (
           <Alert variant="filled" severity="warning" className="mt-5">
             Alert: Signs of hive distress detected, check for queen loss or
             disease!
@@ -162,7 +209,11 @@ const updateSensorDataFromSelect = async () => {
           )
         )
       ) : null}
-      <MultipleSelectChip  allSonsorsIds={allSensors} currentSensorId={currentSensorId} updateSensorDataFromSelect={updateSensorDataFromSelect}/>
+      <MultipleSelectChip
+        allSonsorsIds={allSensors}
+        currentSensorId={currentSensorId}
+        updateSensorDataFromSelect={updateSensorDataFromSelect}
+      />
       {/* Card widget */}
       <div className="mt-3 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-3 3xl:grid-cols-6">
         <Widget
@@ -189,18 +240,17 @@ const updateSensorDataFromSelect = async () => {
         />
         <Widget
           bg_color={
-             latestSensor
-    ? isWarningOn
-      ? "!bg-red-100" // Warning state (red background)
-    : IsNoDataWarning
-      ? null // No data state (gray background)
-    : "!bg-green-100" // Normal state (green background)
-    : null // Fallback when no latestSensor (gray background)
-}
-
+            latestSensor
+              ? isWarningOn
+                ? "!bg-red-100" // Warning state (red background)
+                : IsNoDataWarning
+                ? null // No data state (gray background)
+                : "!bg-green-100" // Normal state (green background)
+              : null // Fallback when no latestSensor (gray background)
+          }
           icon={<GppGoodIcon className="h-7 w-7" />}
           title={"State"}
-          subtitle={latestSensor ? latestSensor.hive_state : "Loading..."}
+          subtitle={latestSensor ? hiveHealth : "Loading..."}
         />
         <Widget
           icon={<MdSensors className="h-6 w-6" />}
@@ -224,21 +274,22 @@ const updateSensorDataFromSelect = async () => {
             lng={latestSensor.longitude}
           />
         ) : (
-          <div><Box 
-  sx={{ 
-    display: 'flex',
-    justifyContent: 'center', // horizontal centering
-    alignItems: 'center',    // vertical centering
-    height: '100%'           // takes full height of parent
-  }}
->
-  <CircularProgress />
-</Box>
-    </div>
+          <div>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center", // horizontal centering
+                alignItems: "center", // vertical centering
+                height: "100%", // takes full height of parent
+              }}
+            >
+              <CircularProgress />
+            </Box>
+          </div>
         )}
       </div>
-      
-{/* Tables & Charts - Entire Section Commented Out
+
+      {/* Tables & Charts - Entire Section Commented Out
 <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-2">
   {/* Check Table * /}
   <div>
@@ -272,7 +323,6 @@ const updateSensorDataFromSelect = async () => {
   </div>
 </div>
 */}
-      
     </div>
   );
 };

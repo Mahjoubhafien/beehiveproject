@@ -206,38 +206,35 @@ app.get("/admin/sensor-ids", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-//////////// Get All Hives Api /////////
+//////////// Get All Hives location /////////
 app.get("/admin/getHiveLocation", async (req, res) => {
   const { latitude, longitude } = req.query;
 
   if (!latitude || !longitude) {
-    return res
-      .status(400)
-      .json({ error: "Latitude and longitude are required" });
+    return res.status(400).json({ error: "Latitude and longitude are required" });
   }
 
   try {
     const response = await axios.get(
-      "https://api.opencagedata.com/geocode/v1/json",
+      "https://nominatim.openstreetmap.org/reverse",
       {
         params: {
-          q: `${latitude},${longitude}`,
-          key: OPENCAGE_API_KEY,
-          no_annotations: 1, // Optional: if you want a lighter response
+          lat: latitude,
+          lon: longitude,
+          format: "json",
+          addressdetails: 1,
+        },
+        headers: {
+          "User-Agent": "beehive/1.0 (mahjoubhafyen@gmail.com)", // Required by Nominatim
+          "Accept-Language": "en", // 👈 Forces English response
         },
       }
     );
 
-    const results = response.data.results;
-
-    if (results.length === 0) {
-      return res.status(404).json({ error: "Location not found" });
-    }
-
-    const city =
-      results[0]?.components?._normalized_city ||
-      results[0]?.components?.city ||
-      null;
+    const city = response.data.address?.city || 
+                 response.data.address?.town || 
+                 response.data.address?.village || 
+                 null;
 
     if (!city) {
       return res.status(404).json({ error: "City not found in location data" });

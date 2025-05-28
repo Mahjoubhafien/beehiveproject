@@ -13,6 +13,7 @@ import SensorsOffIcon from "@mui/icons-material/SensorsOff";
 import Tooltip from "@mui/material/Tooltip";
 import { FaEdit } from "react-icons/fa";
 import BasicTextFields from "./TextField.jsx";
+import { background } from "@chakra-ui/system";
 
 const HiveCard = ({
   hiveName,
@@ -39,6 +40,7 @@ const HiveCard = ({
   const [newHiveName, setNewHiveName] = useState("");
   const [newSensorid, setNewSensorid] = useState("");
   const [newHiveLocation, setNewHiveLocation] = useState("");
+  const [isGpsCorrect, setIsGpsCorrect] = useState(true);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -47,35 +49,33 @@ const HiveCard = ({
     return () => clearInterval(interval);
   }, []);
 
- 
-
   useEffect(() => {
-  const checkHiveHealth = (Temperature, Humidity) => {
-    const MIN_TEMP = 32;
-    const MAX_TEMP = 36;
-    const MIN_HUMIDITY = 50;
-    const MAX_HUMIDITY = 70;
+    const checkHiveHealth = (Temperature, Humidity) => {
+      const MIN_TEMP = 32;
+      const MAX_TEMP = 36;
+      const MIN_HUMIDITY = 50;
+      const MAX_HUMIDITY = 70;
 
-    if (Temperature === null || Humidity === null) {
-      onHealthStatusChange("No Data");
-      return "No Data";
-    }
+      if (Temperature === null || Humidity === null) {
+        onHealthStatusChange("No Data");
+        return "No Data";
+      }
 
-    if (
-      Temperature >= MIN_TEMP &&
-      Temperature <= MAX_TEMP &&
-      Humidity >= MIN_HUMIDITY &&
-      Humidity <= MAX_HUMIDITY
-    ) {
-      onHealthStatusChange("Healthy");
-      return "Healthy";
-    }
-    onHealthStatusChange("Unhealthy");
-    return "Unhealthy";
-  };
+      if (
+        Temperature >= MIN_TEMP &&
+        Temperature <= MAX_TEMP &&
+        Humidity >= MIN_HUMIDITY &&
+        Humidity <= MAX_HUMIDITY
+      ) {
+        onHealthStatusChange("Healthy");
+        return "Healthy";
+      }
+      onHealthStatusChange("Unhealthy");
+      return "Unhealthy";
+    };
 
-  setHealthStatus(checkHiveHealth(Temperature, Humidity));
-}, [Temperature, Humidity]);
+    setHealthStatus(checkHiveHealth(Temperature, Humidity));
+  }, [Temperature, Humidity]);
   useEffect(() => {
     const sendHiveState = async () => {
       try {
@@ -95,28 +95,58 @@ const HiveCard = ({
     };
     sendHiveState();
   }, [healthStatus, id]);
+  ////////// check if the gps i putted correct ////////
   useEffect(() => {
     const fetchLocation = async () => {
       try {
-        // Make sure sensorData has at least one entry
         const response = await fetch(
           `http://localhost:5000/admin/getHiveLocation?latitude=${Latitude}&longitude=${Longitude}`
         );
         const locationData = await response.json();
-        setSensorLocation(locationData.city);
+        setSensorLocation(locationData.city); // e.g., "Tunis"
+
+        // Normalize strings for comparison
+        const normalizeString = (str) => {
+          if (!str) return "";
+          return str
+            .toLowerCase() // Case-insensitive
+            .trim() // Remove whitespace
+            .normalize("NFD") // Convert accents to base characters (é → e)
+            .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
+            .replace(/[أ-ي]/g, (char) => {
+              // Optional: Map Arabic to Latin equivalents
+              const arabicToLatin = {
+                ت: "t",
+                و: "o",
+                ن: "n",
+                س: "s", // Example: "تونس" → "tunis"
+                // Add more mappings as needed
+              };
+              return arabicToLatin[char] || char;
+            });
+        };
+
+        // Normalize both the GPS city and user input
+        const normalizedGpsCity = normalizeString(locationData.city); // "tunis"
+        const normalizedUserInput = normalizeString(Location); // e.g., "تونس" → "tunis"
+
+        // Check if they match (flexibly)
         const isCorrect =
-        Latitude !== null &&
-        Longitude !== null &&
-        locationData.city === Location;
+          Latitude !== null &&
+          Longitude !== null &&
+          (normalizedGpsCity === normalizedUserInput ||
+            normalizedGpsCity.includes(normalizedUserInput) ||
+            normalizedUserInput.includes(normalizedGpsCity));
+        setIsGpsCorrect(isCorrect);
+        //console.log(isCorrect);
+        GpsErrorHandler(id, hiveName, isCorrect);
+      } catch (error) {
+        console.error("Error fetching location:", error);
+      }
+    };
 
-      GpsErrorHandler(id, hiveName, isCorrect);
-    } catch (error) {
-      console.error("Error fetching location:", error);
-    }
-  };
-
-  fetchLocation();
-  }, [Latitude, Longitude, Location]); // Re-run when sensorData changes
+    if (Latitude && Longitude) fetchLocation();
+  }, [Latitude, Longitude, Location]);
 
   //edit hive function
   const editHiveHandler = async () => {
@@ -134,7 +164,7 @@ const HiveCard = ({
           id,
         }),
       });
-            const result = await response.json();
+      const result = await response.json();
 
       if (!response.ok) {
         console.error("Server Error:", result.message);
@@ -297,9 +327,35 @@ const HiveCard = ({
           {!IsEditButtenPresed ? (
             <div className="text-grey-500 mb-2 flex items-center text-sm font-bold dark:text-white">
               <MapIcon className="mr-1" />
-              <span>
-                Location:{" "}
-                {Latitude && Longitude ? sensorLocation : "Waiting For GPS..."}
+              <span
+                style={{
+                  backgroundColor: !isGpsCorrect ? "#ffebee" : "transparent",
+                  borderRadius: "4px",
+                  border: !isGpsCorrect ? "1px solid #f44336" : "none",
+                  display: "inline-block",
+                }}
+              >
+                {!sensorLocation ? (
+                  <span style={{ color: "#9e9e9e", fontStyle: "italic" }}>
+                    Waiting for GPS...
+                  </span>
+                ) : isGpsCorrect ? (
+                  <span style={{ color: "black"}}>
+                    Verified: {sensorLocation}
+                  </span>
+                ) : (
+                  <span style={{ color: "#d32f2f" }}>
+                    <strong>Mismatch!</strong> You entered "
+                    <span style={{ textDecoration: "underline" }}>
+                      {Location}
+                    </span>
+                    ", but GPS detected "
+                    <span style={{ textDecoration: "underline" }}>
+                      {sensorLocation}
+                    </span>
+                    ".
+                  </span>
+                )}
               </span>
               {Latitude && Longitude && (
                 <Tooltip title="Real Time Location" arrow>

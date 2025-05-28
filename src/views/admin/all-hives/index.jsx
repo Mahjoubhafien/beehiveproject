@@ -32,7 +32,7 @@ const [healthCounts, setHealthCounts] = useState({
       return newCounts;
     });
   };
-  /////// Fetch All Hives useEffect when a load the page////////
+  /////// Fetch All Hives useEffect when a load the page and repete it every 2s////////
  useEffect(() => {
   const fetchHives = async () => {
     try {
@@ -207,7 +207,7 @@ function editWarnnigHandler(e)
   return (
     <div>
 <div>
-  {!isGPSCorrect && hiveWorngGps.length > 0 ? (
+  {hiveWorngGps.length > 0 ? (
     <Alert variant="filled" severity="error" className="mt-3">
       GPS Error in hive(s):{" "}
       {hiveWorngGps.map(hive => `${hive.hiveName} (ID: ${hive.id})`).join(', ')}
