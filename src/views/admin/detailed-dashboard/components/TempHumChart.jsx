@@ -65,6 +65,9 @@ export default function TempHumChart({ allSensorData = [] }) {
     toolbar: {
       show: true,
     },
+    animations: {
+      enabled: false, //Disables all animations
+    },
   },
   xaxis: {
     ...lineChartOptionsTotalSpent.xaxis,

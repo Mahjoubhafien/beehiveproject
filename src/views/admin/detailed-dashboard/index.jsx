@@ -23,7 +23,7 @@ import Widget from "components/widget/Widget";
 const Dashboard = () => {
   const [allSensorData, setAllSensorData] = useState([]);
   const [sensorLoation, setSensorLoation] = useState();
-  const [latestSensor, setLatestSensor] = useState();
+  const [latestSensor, setLatestSensor] = useState(); // n data
   const [isWarningOn, setIsWarningOn] = useState(false);
   const [isCloseButtonPressed, setIsCloseButtonPressed] = useState(false);
   const [allSensors, setAllSensors] = useState([]);
@@ -31,57 +31,12 @@ const Dashboard = () => {
   const [IsNoDataWarning, setIsNoDataWarning] = useState(false);
   const [hiveHealth, sethiveHealth] = useState("Checking");
 
+/// i think it need web socket //
+/**/ 
+/// i think it need web socket //
 
-  /// This function called when we select another sensor frm the detailed dashboard page /////
-  const updateSensorDataFromSelect = async () => {
-    const MIN_TEMP = 32;
-    const MAX_TEMP = 36;
-    const MIN_HUMIDITY = 50;
-    const MAX_HUMIDITY = 70;
-
-    try {
-      const response = await fetch(
-        "http://localhost:5000/admin/getCurrentSensorData"
-      );
-      const sensorData = await response.json();
-      const latest = sensorData[sensorData.length - 1];
-      //return health no data when temp and hum null
-      if (!latest || latest.temperature == null || latest.humidity == null) {
-        setIsNoDataWarning(true);
-        sethiveHealth("No Data");
-        return;
-      }
-      const reponse = await fetch(
-        `http://localhost:5000/admin/getHiveLocation?latitude=${
-          sensorData[sensorData.length - 1].latitude
-        }&longitude=${sensorData[sensorData.length - 1].longitude}`
-      );
-      const location = await reponse.json();
-      setSensorLoation(location.city);
-      setAllSensorData(sensorData);
-      if (
-        sensorData[sensorData.length - 1].temperature >= MIN_TEMP &&
-        sensorData[sensorData.length - 1].temperature <= MAX_TEMP &&
-        sensorData[sensorData.length - 1].humidity >= MIN_HUMIDITY &&
-        sensorData[sensorData.length - 1].humidity <= MAX_HUMIDITY
-      ) {
-        sethiveHealth("Healthy");
-        setIsWarningOn(false);
-        setIsNoDataWarning(false);
-      } else {
-        sethiveHealth("Unhealthy");
-        setIsWarningOn(true);
-        setIsNoDataWarning(false);
-      }
-      // Set the latest sensor value after data is fetched
-      if (sensorData.length > 0) {
-        setLatestSensor(sensorData[sensorData.length - 1]);
-      }
-    } catch (err) {
-      console.error("Error fetching data:", err);
-    }
-  };
-  /////////// Fetch the selected Sensor data, repeated every second ( you can change it) ////////
+  
+  /////////// Fetch the selected Sensor data, repeated every 1s ( you can change it) ////////
   useEffect(() => {
     const fetchCurrentSensorData = async () => {
       const MIN_TEMP = 32;
@@ -95,19 +50,13 @@ const Dashboard = () => {
       );
       const sensorData = await response.json();
       const latest = sensorData[sensorData.length - 1];
+      //console.log(latest);
       //return health no data when temp and hum null
       if (!latest || latest.temperature == null || latest.humidity == null) {
         setIsNoDataWarning(true);
         sethiveHealth("No Data");
         return;
       }
-      const reponse = await fetch(
-        `http://localhost:5000/admin/getHiveLocation?latitude=${
-          sensorData[sensorData.length - 1].latitude
-        }&longitude=${sensorData[sensorData.length - 1].longitude}`
-      );
-      const location = await reponse.json();
-      setSensorLoation(location.city);
       setAllSensorData(sensorData);
       if (
         sensorData[sensorData.length - 1].temperature >= MIN_TEMP &&
@@ -134,11 +83,31 @@ const Dashboard = () => {
     fetchCurrentSensorData();
 
     // Set interval to fetch every second
-    const interval = setInterval(fetchCurrentSensorData, 1000);
+    const interval = setInterval(fetchCurrentSensorData,2000);
 
     // Clear interval on unmount
     return () => clearInterval(interval);
   }, []);
+  ////////// fetch the current location ///////////
+  useEffect(() => {
+    const fetchSensorLocation = async () => {
+        if (latestSensor && latestSensor.latitude && latestSensor.longitude) {
+            try {
+                const response = await fetch(
+                    `http://localhost:5000/admin/getHiveLocation?latitude=${
+                        latestSensor.latitude
+                    }&longitude=${latestSensor.longitude}`
+                );
+                const location = await response.json();
+                setSensorLoation(location.city);
+            } catch (err) {
+                console.error("Error fetching location:", err);
+            }
+        }
+    };
+
+    fetchSensorLocation();
+}, [latestSensor]);  // This will run whenever latestSensor changes
 
   //////// fetch all sensor id that i have, to select them in the detailed dashboard page /////////
   useEffect(() => {
@@ -177,6 +146,7 @@ const Dashboard = () => {
 
     fetchCurrentSensorId();
   }, []);
+/**/ 
   return (
     <div>
       {latestSensor ? (
@@ -212,7 +182,6 @@ const Dashboard = () => {
       <MultipleSelectChip
         allSonsorsIds={allSensors}
         currentSensorId={currentSensorId}
-        updateSensorDataFromSelect={updateSensorDataFromSelect}
       />
       {/* Card widget */}
       <div className="mt-3 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-3 3xl:grid-cols-6">

@@ -63,28 +63,31 @@ const navigate = useNavigate();
 
   return (
     <div className="!mt-1">
-      <FormControl sx={{ m: 1, width: 300 }}>
-  <InputLabel id="sensor-select-label">{props.currentSensorId}</InputLabel>
-  <Select
-    labelId="sensor-select-label"
-    id="sensor-select"
-    value={personName}
-    onChange={handleChange}
-    input={<OutlinedInput label="Sensor ID" />}
-    renderValue={(selected) => <Chip label={selected} />}
-    MenuProps={MenuProps}
-  >
-    {props.allSonsorsIds.map((name) => (
-      <MenuItem
-        key={name}
-        value={name}
-        style={getStyles(name, personName, theme)}
-      >
-        {name}
-      </MenuItem>
-    ))}
-  </Select>
-</FormControl>
-    </div>
+  <FormControl sx={{ m: 1, width: 300 }}>
+    <InputLabel id="sensor-select-label">{props.currentSensorId}</InputLabel>
+    <Select
+      labelId="sensor-select-label"
+      id="sensor-select"
+      value={personName}
+      onChange={handleChange}
+      input={<OutlinedInput label="Sensor ID" />}
+      renderValue={(selected) => <Chip label={selected} />}
+      MenuProps={MenuProps}
+    >
+      {/* Sort the array before mapping */}
+      {props.allSonsorsIds
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true })) // Numeric-aware sort
+        .map((name) => (
+          <MenuItem
+            key={name}
+            value={name}
+            style={getStyles(name, personName, theme)}
+          >
+            {name}
+          </MenuItem>
+        ))}
+    </Select>
+  </FormControl>
+</div>
   );
 }

@@ -4,7 +4,7 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import { styled } from "@mui/material/styles";
 import GpsMap from "./GpsMap.jsx";
-import { MdGpsFixed } from "react-icons/md";
+import { MdGpsFixed, MdWbSunny, MdWaterDrop, MdAir } from "react-icons/md";
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: "#fff",
@@ -17,15 +17,29 @@ const Item = styled(Paper)(({ theme }) => ({
   }),
 }));
 
+const api_key="e21f2b6fce3340dc9ba143227252805";
+
 function HivesSummary(props) {
-   // const [isRed, setIsRed] = useState(false);
-/*
+   const [weather, setWeather] = useState(null);
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      setIsRed(prev => !prev);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);*/
+    const fetchWeather = async () => {
+      if (!props.lat || !props.lon) return;
+
+      try {
+        const query = `${props.lat},${props.lon}`;
+        const response = await fetch(
+          `https://api.weatherapi.com/v1/current.json?key=${api_key}&q=${query}`
+        );
+        const data = await response.json();
+        setWeather(data.current);
+      } catch (error) {
+        console.error("Failed to fetch weather:", error);
+      }
+    };
+
+    fetchWeather();
+  }, [props.lat, props.lon]);
 
   return (
     <div>
@@ -50,19 +64,22 @@ function HivesSummary(props) {
           No Data hives{" "}
           <span style={{ fontWeight: "bold" }}>{props.noDataHives}</span>
         </Item>
-       {/* <Item style={{
-      backgroundColor: "#00008B",
-      color: "white",
-      display: "flex",
-      alignItems: "center",
-      gap: "8px"
-    }}>
-      Get Current Location 
-      <MdGpsFixed style={{
-        color: isRed ? 'red' : 'white',
-        transition: 'color 0.3s ease'
-      }} />
-    </Item>*/}
+         {/* Weather Data Item */}
+        {weather && (
+          <Item style={{ backgroundColor: "#0288d1", color: "white" }}>
+  <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "2rem" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+      <MdWbSunny /> {weather.temp_c}°C
+    </div>
+    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+      <MdWaterDrop /> {weather.humidity}%
+    </div>
+    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+      <MdAir /> {weather.wind_kph} kph
+    </div>
+  </div>
+</Item>
+        )}
       </Stack>
     </div>
   );

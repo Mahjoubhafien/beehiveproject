@@ -8,48 +8,47 @@ import HivesSummary from "./components/HivesSummary.jsx";
 
 const AllHives = () => {
   const [isGPSCorrect, setIsGPSCorrect] = useState(true);
-    const [hiveWorngGps, setHiveWorngGps] = useState([]);
+  const [hiveWorngGps, setHiveWorngGps] = useState([]);
   const [listOfHives, setlistOfHives] = useState([]);
   const [isSlideclicked, setSladeState] = useState(false);
   const [isHiveAdded, setisHiveAdded] = useState(false);
   const [isSensorIdNull, setIsSensorIdNull] = useState(false);
   const [isSensorIdAlreadyExist, setIsSensorIdAlreadyExist] = useState(false);
   const [isHiveModified, setIsHiveModified] = useState(false);
-const [healthCounts, setHealthCounts] = useState({
+  const [healthCounts, setHealthCounts] = useState({
     healthy: 0,
     unhealthy: 0,
-    noData: 0
+    noData: 0,
   });
-/* START WebSockets */
 
-/*END  WebSockets  */
   const updateHealthCounts = (status) => {
-    setHealthCounts(prev => {
-      const newCounts = {...prev};
-      if (status === 'Healthy') newCounts.healthy += 1;
-      else if (status === 'Unhealthy') newCounts.unhealthy += 1;
+    setHealthCounts((prev) => {
+      const newCounts = { ...prev };
+      if (status === "Healthy") newCounts.healthy += 1;
+      else if (status === "Unhealthy") newCounts.unhealthy += 1;
       else newCounts.noData += 1;
       return newCounts;
     });
   };
+
   /////// Fetch All Hives useEffect when a load the page and repete it every 2s////////
- useEffect(() => {
-  const fetchHives = async () => {
-    try {
-      const response = await fetch("http://localhost:5000/admin/getAllHives");
-      const data = await response.json();
-      setlistOfHives(data);
-    } catch (err) {
-      console.error("Error fetching data:", err);
-    }
-  };
+  useEffect(() => {
+    const fetchHives = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/admin/getAllHives");
+        const data = await response.json();
+        setlistOfHives(data);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      }
+    };
 
-  fetchHives(); // initial load
+    fetchHives(); // initial load
 
-  const interval = setInterval(fetchHives, 2000); // re-fetch every 5 seconds
+    const interval = setInterval(fetchHives, 1000); // re-fetch every 1 seconds
 
-  return () => clearInterval(interval); // cleanup on unmount
-}, []);
+    return () => clearInterval(interval); // cleanup on unmount
+  }, []);
   ///////////// notification area /////////////////
   useEffect(() => {
     if (isHiveAdded) {
@@ -78,7 +77,7 @@ const [healthCounts, setHealthCounts] = useState({
       return () => clearTimeout(timer); // Cleanup on unmount
     }
   }, [isSensorIdAlreadyExist]); // Run effect when `isHiveAdded` changes
-useEffect(() => {
+  useEffect(() => {
     if (isHiveModified) {
       const timer = setTimeout(() => {
         setIsHiveModified(false); // Hide the alert after 3 seconds
@@ -149,76 +148,80 @@ useEffect(() => {
     }
   }
   /// set the allert of GPS ////
-function GpsErrorHandler(id, hiveName, isCorrect) {
-  if (!isCorrect) {
-    console.log("GPS error from sensor => " + id + " hive name: " + hiveName);
-    setIsGPSCorrect(false);
-    setHiveWorngGps((prevValue) => {
-      const alreadyExists = prevValue.some((hive) => hive.id === id);
-      if (alreadyExists) return prevValue;
-      return [...prevValue, { id, hiveName }];
-    });
-  } else {
-    // GPS is now correct → remove hive from error list
-    console.log("GPS corrected for hive: " + hiveName);
-    setIsGPSCorrect(true);
-    setHiveWorngGps((prevValue) => prevValue.filter((hive) => hive.id !== id));
+  function GpsErrorHandler(id, hiveName, isCorrect) {
+    if (!isCorrect) {
+      console.log("GPS error from sensor => " + id + " hive name: " + hiveName);
+      setIsGPSCorrect(false);
+      setHiveWorngGps((prevValue) => {
+        const alreadyExists = prevValue.some((hive) => hive.id === id);
+        if (alreadyExists) return prevValue;
+        return [...prevValue, { id, hiveName }];
+      });
+    } else {
+      // GPS is now correct → remove hive from error list
+      console.log("GPS corrected for hive: " + hiveName);
+      setIsGPSCorrect(true);
+      setHiveWorngGps((prevValue) =>
+        prevValue.filter((hive) => hive.id !== id)
+      );
+    }
   }
-}  
   const formatTimestamp = (isoString) => {
-  const date = new Date(isoString);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  
-  return `${year}-${month}-${day} ${hours}:${minutes}`;
-};
-////// hive card edir sensor id empty ////
-function editWarnnigHandler(e)
-{
-  if(e === "Sensor ID already exists.")
-  {
-    setIsSensorIdAlreadyExist(true);
-  }
-    if(e === "Sensor ID cannot be empty.")
-  {
-    setIsSensorIdNull(true);
-  }
-    if(e === "Hive updated data received successfully")
-  {
-    setIsHiveModified(true);
-  }
+    const date = new Date(isoString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
 
-
-}
-///// update hives card after editing ////////
- const updateHivesCard = async () => {
-  try {
-    const response = await fetch("http://localhost:5000/admin/getAllHives");
-    const data = await response.json();
-    setlistOfHives(data);
-    editWarnnigHandler("Hive updated data received successfully");
-  } catch (err) {
-    console.error("Error fetching data:", err);
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+  };
+  ////// hive card edir sensor id empty ////
+  function editWarnnigHandler(e) {
+    if (e === "Sensor ID already exists.") {
+      setIsSensorIdAlreadyExist(true);
+    }
+    if (e === "Sensor ID cannot be empty.") {
+      setIsSensorIdNull(true);
+    }
+    if (e === "Hive updated data received successfully") {
+      setIsHiveModified(true);
+    }
   }
-};
+  ///// update hives card after editing ////////
+  const updateHivesCard = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/admin/getAllHives");
+      const data = await response.json();
+      setlistOfHives(data);
+      editWarnnigHandler("Hive updated data received successfully");
+    } catch (err) {
+      console.error("Error fetching data:", err);
+    }
+  };
+  /**/
   return (
     <div>
-<div>
-  {hiveWorngGps.length > 0 ? (
-    <Alert variant="filled" severity="error" className="mt-3">
-      GPS Error in hive(s):{" "}
-      {hiveWorngGps.map(hive => `${hive.hiveName} (ID: ${hive.id})`).join(', ')}
-    </Alert>
-  ) : null}
-</div>
-      
-      <div className="flex items-center justify-center mt-5">
-        <HivesSummary totalHive={listOfHives.length} healthyHives={healthCounts.healthy} unhealthyHives={healthCounts.unhealthy}
+      <div>
+        {hiveWorngGps.length > 0 ? (
+          <Alert variant="filled" severity="error" className="mt-3">
+            GPS Error in hive(s):{" "}
+            {hiveWorngGps
+              .map((hive) => `${hive.hiveName} (ID: ${hive.id})`)
+              .join(", ")}
+          </Alert>
+        ) : null}
+      </div>
+
+      <div className="mt-5 flex items-center justify-center">
+        <HivesSummary
+          totalHive={listOfHives.length}
+          healthyHives={healthCounts.healthy}
+          unhealthyHives={healthCounts.unhealthy}
           noDataHives={healthCounts.noData}
-          />
+          lon="11.041990"
+          lat="35.398438"
+        />
       </div>
       <AddHiveButton sliderHandler={sliderHandler} />
       {isSlideclicked ? <AddHiveArea AddHive={AddHiveHandler} /> : null}
@@ -248,7 +251,11 @@ function editWarnnigHandler(e)
             key={index}
             id={hive.id}
             hiveName={hive.hiveName}
-            image={hive.image_url ? `${"http://localhost:5000"}${hive.image_url}` : BEE1 }
+            image={
+              hive.image_url
+                ? `${"http://localhost:5000"}${hive.image_url}`
+                : BEE1
+            }
             Temperature={hive.temperature}
             Humidity={hive.humidity}
             Location={hive.location} //
