@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -17,29 +17,8 @@ const Item = styled(Paper)(({ theme }) => ({
   }),
 }));
 
-const api_key="e21f2b6fce3340dc9ba143227252805";
 
 function HivesSummary(props) {
-   const [weather, setWeather] = useState(null);
-
-  useEffect(() => {
-    const fetchWeather = async () => {
-      if (!props.lat || !props.lon) return;
-
-      try {
-        const query = `${props.lat},${props.lon}`;
-        const response = await fetch(
-          `https://api.weatherapi.com/v1/current.json?key=${api_key}&q=${query}`
-        );
-        const data = await response.json();
-        setWeather(data.current);
-      } catch (error) {
-        console.error("Failed to fetch weather:", error);
-      }
-    };
-
-    fetchWeather();
-  }, [props.lat, props.lon]);
 
   return (
     <div>
@@ -64,24 +43,13 @@ function HivesSummary(props) {
           No Data hives{" "}
           <span style={{ fontWeight: "bold" }}>{props.noDataHives}</span>
         </Item>
-         {/* Weather Data Item */}
-        {weather && (
-          <Item style={{ backgroundColor: "#0288d1", color: "white" }}>
-  <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "2rem" }}>
-    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-      <MdWbSunny /> {weather.temp_c}°C
-    </div>
-    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-      <MdWaterDrop /> {weather.humidity}%
-    </div>
-    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-      <MdAir /> {weather.wind_kph} kph
-    </div>
-  </div>
-</Item>
-        )}
+        
+        {/* Weather Data Item */}
+        
+        {/* END Weather Data Item */}
       </Stack>
     </div>
+    
   );
 }
 export default HivesSummary;

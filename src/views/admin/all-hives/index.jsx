@@ -38,6 +38,7 @@ const AllHives = () => {
         const response = await fetch("http://localhost:5000/admin/getAllHives");
         const data = await response.json();
         setlistOfHives(data);
+        //console.log(data[1].longitude);
       } catch (err) {
         console.error("Error fetching data:", err);
       }
@@ -219,10 +220,11 @@ const AllHives = () => {
           healthyHives={healthCounts.healthy}
           unhealthyHives={healthCounts.unhealthy}
           noDataHives={healthCounts.noData}
-          lon="11.041990"
-          lat="35.398438"
+          //lon={listOfHives ? listOfHives[0].longitude: null}
+          //lat={listOfHives ? listOfHives[0].latitude : null}
         />
       </div>
+      
       <AddHiveButton sliderHandler={sliderHandler} />
       {isSlideclicked ? <AddHiveArea AddHive={AddHiveHandler} /> : null}
       {isHiveAdded ? (

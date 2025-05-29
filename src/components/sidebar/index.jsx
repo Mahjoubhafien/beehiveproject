@@ -1,12 +1,31 @@
 /* eslint-disable */
-
+import React, { useState, useEffect } from "react";
 import { HiX } from "react-icons/hi";
 import Links from "./components/Links";
-
-import SidebarCard from "components/sidebar/componentsrtl/SidebarCard";
 import routes from "routes.js";
-
+import WeatherWidget from "./components/WeatherCard";
 const Sidebar = ({ open, onClose }) => {
+  const [lon, setLon] = useState("0");
+  const [lat, setLat] = useState("0");
+
+  useEffect(() => {
+    const fetchLonLat = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/admin/getAllHives");
+        const data = await response.json();
+        setLon(data[0].longitude);
+        setLat(data[0].latitude);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      }
+    };
+
+    fetchLonLat(); // initial load
+
+    const interval = setInterval(fetchLonLat, 3000000); // re-fetch every 1 seconds
+
+    return () => clearInterval(interval); // cleanup on unmount
+  }, []);
   return (
     <div
       className={`sm:none duration-175 linear fixed !z-50 flex min-h-full flex-col bg-white pb-10 shadow-2xl shadow-white/5 transition-all dark:!bg-navy-800 dark:text-white md:!z-50 lg:!z-50 xl:!z-0 ${
@@ -14,22 +33,28 @@ const Sidebar = ({ open, onClose }) => {
       }`}
     >
       <span
-        className="absolute top-4 right-4 block cursor-pointer xl:hidden"
+        className="absolute right-4 top-4 block cursor-pointer xl:hidden"
         onClick={onClose}
       >
         <HiX />
       </span>
 
       <div className={`mx-[56px] mt-[50px] flex items-center`}>
-        <div className="mt-1 ml-1 h-2.5 font-poppins text-[26px] font-bold uppercase text-navy-700 dark:text-white">
+        <div className="ml-1 mt-1 h-2.5 font-poppins text-[26px] font-bold uppercase text-navy-700 dark:text-white">
           Beehive <span class="font-medium">V0.2</span>
         </div>
       </div>
-      <div class="mt-[58px] mb-7 h-px bg-gray-300 dark:bg-white/30" />
+      <div class="mb-7 mt-[58px] h-px bg-gray-300 dark:bg-white/30" />
       {/* Nav item */}
 
       <ul className="mb-auto pt-1">
         <Links routes={routes} />
+        {/* Weather Widget */}
+        {lon !== "0" && lat !== "0" && (
+          <div className="mt-5 p-4">
+            <WeatherWidget lon={lon} lat={lat} />
+          </div>
+        )}
       </ul>
 
       {/* Nav item end */}
