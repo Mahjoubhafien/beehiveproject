@@ -66,7 +66,7 @@ const WeatherWidget = ({ lat, lon, api_key = "e21f2b6fce3340dc9ba143227252805" }
     <div 
       style={{ 
         position: 'relative',
-        width: '250px',
+        width: '240px',
         height: '200px',
         overflow: 'hidden',
         border: '1px solid #ccc',

@@ -5,28 +5,46 @@ import cors from "cors";
 import axios from "axios";
 import multer from "multer";
 import path from "path";
+import session from "express-session";
+import passport from "passport";
+import { Strategy } from "passport-local";
+
 //import { fileURLToPath } from 'url';
+import env from "dotenv";
+env.config();
 
 const app = express();
 const port = 5000;
 const currentUserId = 1;
 var currentSensorId = "Select Sensor";
+
 // Use environment variables in production
-const OPENCAGE_API_KEY = "f1ac4ad8c84b4078a79304d018f944d5"; // Replace with your key
+const opencage_api_key = process.env.OPENCAGE_API_KEY; // Replace with your key
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true,
+  })
+);
 
 const db = new pg.Client({
-  user: "postgres",
-  host: "localhost",
-  database: "beehive",
-  password: "2011",
-  port: 5432,
-});
-db.connect();
+  user: process.env.PG_USER,
+  host: process.env.PG_HOST,
+  database: process.env.PG_DATABASE,
+  password: process.env.PG_PASSWORD,
+  port: process.env.PG_PORT,});
+db.connect()
 
 app.use(cors()); // <---- Very important!
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
+//Paspport intialisation
+app.use(passport.initialize());
+app.use(passport.session());
+
 // Configure storage
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
