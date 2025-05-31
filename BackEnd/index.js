@@ -7,28 +7,23 @@ import multer from "multer";
 import path from "path";
 import session from "express-session";
 import passport from "passport";
-import { Strategy } from "passport-local";
-
-//import { fileURLToPath } from 'url';
+import { Strategy as LocalStrategy } from 'passport-local';
+import bcrypt from "bcrypt";
 import env from "dotenv";
 env.config();
 
 const app = express();
 const port = 5000;
-const currentUserId = 1;
+const saltRounds = 10;
+var currentUserId = 0;
 var currentSensorId = "Select Sensor";
 
-// Use environment variables in production
-const opencage_api_key = process.env.OPENCAGE_API_KEY; // Replace with your key
+app.use(cors({
+  origin: "http://localhost:3000", // Allow your React frontend
+  credentials: true // Allow cookies/session to work
+})); 
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: true,
-  })
-);
-
+// db intialitation
 const db = new pg.Client({
   user: process.env.PG_USER,
   host: process.env.PG_HOST,
@@ -37,13 +32,143 @@ const db = new pg.Client({
   port: process.env.PG_PORT,});
 db.connect()
 
-app.use(cors()); // <---- Very important!
-app.use(express.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static("public"));
+//session intialitation
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      secure: false, // Set to true if using HTTPS
+      httpOnly: true,
+      sameSite: "lax",
+      maxAge: 1000 * 60 * 60 * 24 // 1 day
+    }
+  })
+);
 //Paspport intialisation
 app.use(passport.initialize());
 app.use(passport.session());
+
+//Common Midalware init 
+app.use(express.json());
+app.use(bodyParser.json());
+app.use(express.static("public"));
+
+
+///////////////////////////////// START Athentiction API /////////////////////////////////////////////////
+
+// Passport Local Strategy
+passport.use(new LocalStrategy(
+  async (username, password, done) => {
+    console.log("im in startegy");
+    console.log(username);
+    console.log(password);
+    try {
+      const result = await db.query('SELECT * FROM users WHERE email = $1', [username]);
+      if (result.rows.length === 0) {
+        return done(null, false, { message: 'Incorrect username.' });
+      }
+      
+      const user = result.rows[0];
+      console.log(user); // user data from database
+      const isValid = await bcrypt.compare(password, user.password);
+      console.log(isValid); // check if the user authenticated
+      
+      if (!isValid) {
+        return done(null, false, { message: 'Incorrect password.' });
+      }
+      return done(null, user);
+    } catch (err) {
+      return done(err);
+    }
+  }
+));
+
+// Serialization
+passport.serializeUser((user, done) => {
+  done(null, user.user_id);
+});
+
+passport.deserializeUser(async (id, done) => {
+  try {
+    const result = await db.query('SELECT * FROM users WHERE user_id = $1', [id]);
+    done(null, result.rows[0]);
+  } catch (err) {
+    done(err);
+  }
+});
+
+
+// Routes 
+app.post('/api/login', passport.authenticate('local'), (req, res) => {
+  res.json({ 
+    success: true, 
+    user: {
+      user_id: req.user.user_id,
+      email: req.user.email
+    }
+  });
+  currentUserId= req.user.user_id; // update the user_id from the data
+  console.log("current user id" +currentUserId);
+});
+
+app.post('/api/register', async (req, res) => {
+  const { email, password } = req.body;
+  
+  try {
+    // Check if user exists
+    const userExists = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+    if (userExists.rows.length > 0) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+    
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Create user
+    const newUser = await db.query(
+      'INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *',
+      [email, hashedPassword]
+    );
+    
+    // Login the new user
+    req.login(newUser.rows[0], (err) => {
+      if (err) {
+        return res.status(500).json({ message: 'Error logging in after registration' });
+      }
+      return res.json({ success: true, user: newUser.rows[0] });
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Registration failed' });
+  }
+});
+
+app.get('/api/user', (req, res) => {
+  if (req.isAuthenticated()) {
+    res.json({ user: req.user });
+  } else {
+    res.status(401).json({ message: 'Not authenticated' });
+  }
+});
+
+app.post('/api/logout', (req, res) => {
+  req.logout((err) => {
+    if (err) {
+      return res.status(500).json({ message: 'Logout failed' });
+    }
+    res.json({ success: true });
+  });
+});
+
+// Add endpoint to get active users (optional)
+app.get('/api/active-users', (req, res) => {
+  res.json({ currentUserId });
+});
+
+
+///////////////////////////////// END Athentiction API /////////////////////////////////////////////////
+
 
 // Configure storage
 const storage = multer.diskStorage({
@@ -150,6 +275,12 @@ app.post("/admin/add-hive", async (req, res) => {
 getting hive list of specific user id
 */
 app.get("/admin/getAllHives", async (req, res) => {
+  console.time('isAuthenticated');
+  const isAuth = req.isAuthenticated();
+  console.timeEnd('isAuthenticated');
+  
+  if (isAuth){
+    console.log("passed");
   try {
     // Get all hives with their latest sensor data in a single query
     const result = await db.query(
@@ -184,6 +315,9 @@ app.get("/admin/getAllHives", async (req, res) => {
   } catch (err) {
     console.error("Error fetching hive data:", err);
     res.status(500).json({ error: "Internal server error" });
+  }}else {
+        console.log("not passed");
+        console.log(req.isAuthenticated());
   }
 });
 /*
@@ -386,3 +520,5 @@ app.post("/admin/edit-hive", async (req, res) => {
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
+
+
