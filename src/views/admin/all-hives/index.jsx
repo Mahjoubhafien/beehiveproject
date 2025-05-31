@@ -5,8 +5,10 @@ import BEE1 from "assets/img/beehive/bee5.jpg";
 import AddHiveButton from "./components/AddHiveButton.jsx";
 import Alert from "@mui/material/Alert";
 import HivesSummary from "./components/HivesSummary.jsx";
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 const AllHives = () => {
+  const navigate = useNavigate(); // Initialize navigate function
   const [isGPSCorrect, setIsGPSCorrect] = useState(true);
   const [hiveWorngGps, setHiveWorngGps] = useState([]);
   const [listOfHives, setlistOfHives] = useState([]);
@@ -33,23 +35,35 @@ const AllHives = () => {
 
   /////// Fetch All Hives useEffect when a load the page and repete it every 2s////////
   useEffect(() => {
-    const fetchHives = async () => {
-      try {
-        const response = await fetch("http://localhost:5000/admin/getAllHives");
-        const data = await response.json();
-        setlistOfHives(data);
-        //console.log(data[1].longitude);
-      } catch (err) {
-        console.error("Error fetching data:", err);
+  const fetchHives = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/admin/getAllHives", {
+        credentials: "include",  // <== This is critical for sessions to work
+        headers: {
+    "Cache-Control": "no-cache", // Prevent cached responses
+    "Pragma": "no-cache"
+  }
+      });
+      const data = await response.json();
+      setlistOfHives(data);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      // Handle network errors or other exceptions
+      if (error.message === 'Failed to fetch') {
+        // Network error
+        console.log('Network error - server might be down');
       }
-    };
+    }
+  };
 
-    fetchHives(); // initial load
+  fetchHives(); // Initial load
 
-    const interval = setInterval(fetchHives, 1000); // re-fetch every 1 seconds
+  //const interval = setInterval(fetchHives, 1000);
 
-    return () => clearInterval(interval); // cleanup on unmount
-  }, []);
+  //return () => clearInterval(interval); // Cleanup on unmount
+}, [navigate]); // Added navigate to dependency array
+
+
   ///////////// notification area /////////////////
   useEffect(() => {
     if (isHiveAdded) {
