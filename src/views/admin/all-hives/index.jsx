@@ -17,6 +17,7 @@ const AllHives = () => {
   const [isSensorIdNull, setIsSensorIdNull] = useState(false);
   const [isSensorIdAlreadyExist, setIsSensorIdAlreadyExist] = useState(false);
   const [isHiveModified, setIsHiveModified] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Add loading state
   const [healthCounts, setHealthCounts] = useState({
     healthy: 0,
     unhealthy: 0,
@@ -34,34 +35,44 @@ const AllHives = () => {
   };
 
   /////// Fetch All Hives useEffect when a load the page and repete it every 2s////////
-  useEffect(() => {
-  const fetchHives = async () => {
-    try {
-      const response = await fetch("http://localhost:5000/admin/getAllHives", {
-        credentials: "include",  // <== This is critical for sessions to work
-        headers: {
-    "Cache-Control": "no-cache", // Prevent cached responses
-    "Pragma": "no-cache"
-  }
-      });
-      const data = await response.json();
-      setlistOfHives(data);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      // Handle network errors or other exceptions
-      if (error.message === 'Failed to fetch') {
-        // Network error
-        console.log('Network error - server might be down');
+useEffect(() => {
+    const fetchHives = async () => {
+      try {
+        setIsLoading(true); // Start loading
+        const response = await fetch("http://localhost:5000/admin/getAllHives", {
+          credentials: "include",
+          headers: {
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+          },
+        });
+
+        if (response.status === 401) {
+          navigate('/auth/sign-in'); // Redirect immediately if unauthorized
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setlistOfHives(data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        if (error.message === 'Failed to fetch') {
+          console.log('Network error - server might be down');
+        }
+      } finally {
+        setIsLoading(false); // Stop loading (even if error occurs)
       }
-    }
-  };
+    };
 
   fetchHives(); // Initial load
 
   //const interval = setInterval(fetchHives, 1000);
-
   //return () => clearInterval(interval); // Cleanup on unmount
-}, [navigate]); // Added navigate to dependency array
+}, [navigate]);
 
 
   ///////////// notification area /////////////////
@@ -119,6 +130,7 @@ const AllHives = () => {
     try {
       const response = await fetch("http://localhost:5000/admin/add-hive", {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -147,8 +159,9 @@ const AllHives = () => {
       const fetchHives = async () => {
         try {
           const response = await fetch(
-            "http://localhost:5000/admin/getAllHives"
-          );
+            "http://localhost:5000/admin/getAllHives", {
+      credentials: "include" // ← IMPORTANT
+    });
           const data = await response.json();
           setlistOfHives(data);
           console.log(listOfHives);
@@ -215,6 +228,9 @@ const AllHives = () => {
     }
   };
   /**/
+  if (isLoading) {
+    return ;
+  }
   return (
     <div>
       <div>

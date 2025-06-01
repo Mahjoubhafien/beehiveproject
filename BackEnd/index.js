@@ -55,19 +55,17 @@ app.use(express.json());
 app.use(bodyParser.json());
 app.use(express.static("public"));
 
-
 ///////////////////////////////// START Athentiction API /////////////////////////////////////////////////
 
 // Passport Local Strategy
 passport.use(new LocalStrategy(
   async (username, password, done) => {
-    console.log("im in startegy");
     console.log(username);
     console.log(password);
     try {
       const result = await db.query('SELECT * FROM users WHERE email = $1', [username]);
       if (result.rows.length === 0) {
-        return done(null, false, { message: 'Incorrect username.' });
+        return done(null, false, { message: 'Incorrect username, Please Try Again' });
       }
       
       const user = result.rows[0];
@@ -76,7 +74,7 @@ passport.use(new LocalStrategy(
       console.log(isValid); // check if the user authenticated
       
       if (!isValid) {
-        return done(null, false, { message: 'Incorrect password.' });
+        return done(null, false, { message: 'Incorrect password, Please Try Again' });
       }
       return done(null, user);
     } catch (err) {
@@ -99,18 +97,39 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
-
-// Routes 
-app.post('/api/login', passport.authenticate('local'), (req, res) => {
-  res.json({ 
-    success: true, 
-    user: {
-      user_id: req.user.user_id,
-      email: req.user.email
+// Login 
+app.post('/api/login', (req, res, next) => {
+  passport.authenticate('local', (err, user, info) => {
+    if (err) {
+      return res.status(500).json({ 
+        success: false,
+        error: "Server error. Please try again later."
+      });
     }
-  });
-  currentUserId= req.user.user_id; // update the user_id from the data
-  console.log("current user id" +currentUserId);
+    if (!user) {
+      return res.status(401).json({ 
+        success: false,
+        error: info.message || "Authentication failed"
+      });
+    }
+    req.logIn(user, (err) => {
+      if (err) {
+        return res.status(500).json({ 
+          success: false,
+          error: "Session error. Please try again."
+        });
+      }
+      currentUserId = user.user_id; // Update global user ID
+      console.log("current user id: " + currentUserId);
+      return res.json({ 
+        success: true,
+        user: {
+          user_id: user.user_id,
+          email: user.email
+        }
+      });
+    });
+  })(req, res, next);
 });
 
 app.post('/api/register', async (req, res) => {
@@ -153,11 +172,35 @@ app.get('/api/user', (req, res) => {
 });
 
 app.post('/api/logout', (req, res) => {
+  // Clear the currentUserId if you're using it
+  currentUserId = null;
+  
   req.logout((err) => {
     if (err) {
-      return res.status(500).json({ message: 'Logout failed' });
+      console.error('Logout error:', err);
+      return res.status(500).json({ 
+        success: false,
+        error: 'Logout failed' 
+      });
     }
-    res.json({ success: true });
+    
+    // Destroy the session completely
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Session destruction error:', err);
+        return res.status(500).json({
+          success: false,
+          error: 'Could not destroy session'
+        });
+      }
+      
+      // Clear the cookie
+      res.clearCookie('connect.sid'); // or your session cookie name
+      return res.json({ 
+        success: true,
+        message: 'Logged out successfully' 
+      });
+    });
   });
 });
 
@@ -275,12 +318,8 @@ app.post("/admin/add-hive", async (req, res) => {
 getting hive list of specific user id
 */
 app.get("/admin/getAllHives", async (req, res) => {
-  console.time('isAuthenticated');
-  const isAuth = req.isAuthenticated();
-  console.timeEnd('isAuthenticated');
-  
-  if (isAuth){
-    console.log("passed");
+  if (req.isAuthenticated()){
+    console.log("user Authorized");
   try {
     // Get all hives with their latest sensor data in a single query
     const result = await db.query(
@@ -316,8 +355,8 @@ app.get("/admin/getAllHives", async (req, res) => {
     console.error("Error fetching hive data:", err);
     res.status(500).json({ error: "Internal server error" });
   }}else {
-        console.log("not passed");
-        console.log(req.isAuthenticated());
+    console.log("User Unauthorized");
+    res.status(401).json({ error: "Unauthorized" }); // Send proper 401 response
   }
 });
 /*
@@ -378,7 +417,7 @@ app.get("/admin/getHiveLocation", async (req, res) => {
         },
         headers: {
           "User-Agent": "beehive/1.0 (mahjoubhafyen@gmail.com)", // Required by Nominatim
-          "Accept-Language": "en", // 👈 Forces English response
+          "Accept-Language": "en", // Forces English response
         },
       }
     );

@@ -11,6 +11,7 @@ const WeatherWidget = ({ lat, lon, api_key = "e21f2b6fce3340dc9ba143227252805" }
 
   // Get location name
   useEffect(() => {
+    console.log("weatherCard");
     const fetchLocation = async () => {
       try {
         const response = await fetch(

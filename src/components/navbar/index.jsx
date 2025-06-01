@@ -2,7 +2,7 @@ import React from "react";
 import Dropdown from "components/dropdown";
 import { FiAlignJustify } from "react-icons/fi";
 import { Link } from "react-router-dom";
-import navbarimage from "assets/img/layout/Navbar.png";
+import navbarimage from "assets/img/layout/se_engineering_sarl_logo.jpg";
 import { BsArrowBarUp } from "react-icons/bs";
 import { FiSearch } from "react-icons/fi";
 import { RiMoonFill, RiSunFill } from "react-icons/ri";
@@ -15,6 +15,33 @@ import avatar from "assets/img/avatars/avatar9.png";
 const Navbar = (props) => {
   const { onOpenSidenav, brandText } = props;
   const [darkmode, setDarkmode] = React.useState(false);
+
+const logOutHandler = async (e) => {
+  e.preventDefault(); // Prevent default anchor behavior
+  
+  try {
+    const response = await fetch('http://localhost:5000/api/logout', {
+      method: 'POST',
+      credentials: 'include' // Important for session cookies
+    });
+
+    if (!response.ok) {
+      throw new Error('Logout failed');
+    }
+
+    // Clear any client-side state
+    localStorage.clear(); // If you store anything in localStorage
+    sessionStorage.clear(); // Or sessionStorage
+    
+    // Redirect to login page
+    window.location.href = '/auth/sign-in'; // Full page reload clears state
+    
+  } catch (error) {
+    console.error('Logout error:', error);
+    alert('Logout failed. Please try again.');
+  }
+};
+
 
   return (
     <nav className="sticky top-4 z-40 flex flex-row flex-wrap items-center justify-between rounded-xl bg-white/10 p-2 backdrop-blur-xl dark:bg-[#0b14374d]">
@@ -89,10 +116,10 @@ const Navbar = (props) => {
                 </div>
                 <div className="ml-2 flex h-full w-full flex-col justify-center rounded-lg px-1 text-sm">
                   <p className="mb-1 text-left text-base font-bold text-gray-900 dark:text-white">
-                    New Update: Horizon UI Dashboard PRO
+                    Welcome to the beehive monitoring System
                   </p>
                   <p className="font-base text-left text-xs text-gray-900 dark:text-white">
-                    A new update for your downloaded item is available!
+                    New hive addet !
                   </p>
                 </div>
               </button>
@@ -103,10 +130,10 @@ const Navbar = (props) => {
                 </div>
                 <div className="ml-2 flex h-full w-full flex-col justify-center rounded-lg px-1 text-sm">
                   <p className="mb-1 text-left text-base font-bold text-gray-900 dark:text-white">
-                    New Update: Horizon UI Dashboard PRO
+                    Welcome to the beehive monitoring System
                   </p>
                   <p className="font-base text-left text-xs text-gray-900 dark:text-white">
-                    A new update for your downloaded item is available!
+                    New hive addet !
                   </p>
                 </div>
               </button>
@@ -114,7 +141,7 @@ const Navbar = (props) => {
           }
           classNames={"py-2 top-4 -left-[230px] md:-left-[440px] w-max"}
         />
-        {/* start Horizon PRO */}
+        {/* */}
         <Dropdown
           button={
             <p className="cursor-pointer">
@@ -133,24 +160,24 @@ const Navbar = (props) => {
               />
               <a
                 target="blank"
-                href="https://horizon-ui.com/pro?ref=live-free-tailwind-react"
+                href="http://www.seengineering-tn.com/"
                 className="px-full linear flex cursor-pointer items-center justify-center rounded-xl bg-brand-500 py-[11px] font-bold text-white transition duration-200 hover:bg-brand-600 hover:text-white active:bg-brand-700 dark:bg-brand-400 dark:hover:bg-brand-300 dark:active:bg-brand-200"
               >
-                Buy Horizon UI PRO
+                Check SE ENGINEERING SARL
               </a>
               <a
                 target="blank"
-                href="https://horizon-ui.com/docs-tailwind/docs/react/installation?ref=live-free-tailwind-react"
+                href="#"
                 className="px-full linear flex cursor-pointer items-center justify-center rounded-xl border py-[11px] font-bold text-navy-700 transition duration-200 hover:bg-gray-200 hover:text-navy-700 dark:!border-white/10 dark:text-white dark:hover:bg-white/20 dark:hover:text-white dark:active:bg-white/10"
               >
                 See Documentation
               </a>
               <a
                 target="blank"
-                href="https://horizon-ui.com/?ref=live-free-tailwind-react"
+                href="#"
                 className="hover:bg-black px-full linear flex cursor-pointer items-center justify-center rounded-xl py-[11px] font-bold text-navy-700 transition duration-200 hover:text-navy-700 dark:text-white dark:hover:text-white"
               >
-                Try Horizon Free
+                Call us
               </a>
             </div>
           }
@@ -189,7 +216,7 @@ const Navbar = (props) => {
               <div className="p-4">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-bold text-navy-700 dark:text-white">
-                    👋 Hey, Adela
+                    👋 Hey, Beekeeper
                   </p>{" "}
                 </div>
               </div>
@@ -208,7 +235,8 @@ const Navbar = (props) => {
                 >
                   Newsletter Settings
                 </a>
-                <a
+                
+                <a onClick={logOutHandler}
                   href=" "
                   className="mt-3 text-sm font-medium text-red-500 hover:text-red-500 transition duration-150 ease-out hover:ease-in"
                 >

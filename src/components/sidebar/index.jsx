@@ -11,7 +11,9 @@ const Sidebar = ({ open, onClose }) => {
   useEffect(() => {
     const fetchLonLat = async () => {
       try {
-        const response = await fetch("http://localhost:5000/admin/getAllHives");
+        const response = await fetch("http://localhost:5000/admin/getAllHives", {
+          credentials: "include", // Required for session cookies
+        });
         const data = await response.json();
         setLon(data[0].longitude);
         setLat(data[0].latitude);
@@ -22,9 +24,6 @@ const Sidebar = ({ open, onClose }) => {
 
     fetchLonLat(); // initial load
 
-    const interval = setInterval(fetchLonLat, 3000000); // re-fetch every 1 seconds
-
-    return () => clearInterval(interval); // cleanup on unmount
   }, []);
   
   return (

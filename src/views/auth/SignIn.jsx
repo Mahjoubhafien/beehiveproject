@@ -14,39 +14,35 @@ export default function SignIn() {
 
 
 const signInHandler = async () => {
-    setIsLoading(true);
-    setError("");
+  setIsLoading(true);
+  setError("");
 
-    try {
-      const response = await fetch('http://localhost:5000/api/login', {
-        method: 'POST',
-        credentials: 'include', // Important for sessions/cookies
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: email,
-          password: password
-        })
-      });
+  try {
+    const response = await fetch('http://localhost:5000/api/login', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: email, password })
+    });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
-
-      // Login successful
-      console.log('User logged in:', data.user);
-      
-      // Redirect to dashboard or home page
-      navigate('/admin/all-hives');
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
+    // First check if response is OK before parsing JSON
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
     }
-  };
+
+    const data = await response.json();
+    console.log('User logged in:', data.user);
+    navigate('/admin/all-hives');
+  } catch (err) {
+    const errorMessage = err.message.includes('JSON') 
+      ? 'Invalid server response' 
+      : err.message;
+    setError(errorMessage);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleGoogleLogin = () => {
     window.location.href = 'http://localhost:5000/api/auth/google';
