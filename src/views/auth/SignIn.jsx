@@ -7,11 +7,18 @@ import { useNavigate } from "react-router-dom";
 export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+
   const navigate = useNavigate();
 
-
+const signUpHandler = async () => {
+  
+}
 
 const signInHandler = async () => {
   setIsLoading(true);
@@ -94,6 +101,20 @@ const signInHandler = async () => {
           onChange={(e) => setEmail(e.target.value)}
         />
 
+        {isSignUp ? (
+  // Phone number input
+  <InputField
+    variant="auth"
+    extra="mb-3"
+    label="phone*"
+    placeholder="123456789"
+    id="phone"
+    type="text"
+    value={phoneNumber}
+    onChange={(e) => setPhoneNumber(e.target.value)}
+  />
+) : null}
+
         {/* Password */}
         <InputField
           variant="auth"
@@ -105,7 +126,19 @@ const signInHandler = async () => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        
+           {isSignUp ? (
+  // confirm password input 
+  <InputField
+    variant="auth"
+          extra="mb-3"
+          label="Confirm Password*"
+          placeholder="Min. 8 characters"
+          id="password"
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+  />
+) : null}
         {/* Checkbox */}
         <div className="mb-4 flex items-center justify-between px-2">
           <div className="flex items-center">
@@ -121,24 +154,36 @@ const signInHandler = async () => {
             Forgot Password?
           </a>
         </div>
-        <button 
+        { !isSignUp ? <button 
           onClick={signInHandler} 
           disabled={isLoading}
           className="linear mt-2 w-full rounded-xl bg-brand-500 py-[12px] text-base font-medium text-white transition duration-200 hover:bg-brand-600 active:bg-brand-700 dark:bg-brand-400 dark:text-white dark:hover:bg-brand-300 dark:active:bg-brand-200"
         >
           {isLoading ? 'Signing In...' : 'Sign In'}
+        </button> : <button 
+          onClick={signUpHandler} 
+          disabled={isLoading}
+          className="linear mt-2 w-full rounded-xl bg-brand-500 py-[12px] text-base font-medium text-white transition duration-200 hover:bg-brand-600 active:bg-brand-700 dark:bg-brand-400 dark:text-white dark:hover:bg-brand-300 dark:active:bg-brand-200"
+        >
+          {isLoading ? 'Signing Up...' : 'Sign Up'}
         </button>
+         }
+        {!isSignUp ?
         <div className="mt-4">
           <span className=" text-sm font-medium text-navy-700 dark:text-gray-600">
             Not registered yet?
           </span>
-          <a
-            href=" "
+          
+          <button onClick={() => setIsSignUp(!isSignUp) }
             className="ml-1 text-sm font-medium text-brand-500 hover:text-brand-600 dark:text-white"
           >
             Create an account
-          </a>
-        </div>
+          </button>
+        </div> : <button onClick={() => setIsSignUp(!isSignUp) }
+            className="ml-1 mt-4 text-sm font-medium text-brand-500 hover:text-brand-600 dark:text-white"
+          >
+            Sign-In
+          </button> }
       </div>
     </div>
   );
