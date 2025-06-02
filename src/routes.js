@@ -7,6 +7,7 @@ import Profile from "views/admin/profile";
 import DataTables from "views/admin/tables";
 import RTLDefault from "views/rtl/default";
 import { GiBeehive } from "react-icons/gi";
+import { IoMdSettings } from "react-icons/io";
 
 // Auth Imports
 import SignIn from "views/auth/SignIn";
@@ -38,7 +39,7 @@ const routes = [
   {
     name: "Settings",
     layout: "/admin",
-    icon: <MdBarChart className="h-6 w-6" />,
+    icon: <IoMdSettings className="h-6 w-6" />,
     path: "Settings",
     component: <DataTables />,
   },
@@ -56,12 +57,13 @@ const routes = [
     icon: <MdLock className="h-6 w-6" />,
     component: <SignIn />,
   },
+  /*
   {
     name: "RTL Admin",
     layout: "/rtl",
     path: "rtl",
     icon: <MdHome className="h-6 w-6" />,
     component: <RTLDefault />,
-  },
+  },*/
 ];
 export default routes;

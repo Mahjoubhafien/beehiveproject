@@ -7,7 +7,8 @@ import multer from "multer";
 import path from "path";
 import session from "express-session";
 import passport from "passport";
-import { Strategy as LocalStrategy } from 'passport-local';
+import { Strategy as LocalStrategy } from "passport-local";
+import GoogleStrategy from "passport-google-oauth2";
 import bcrypt from "bcrypt";
 import env from "dotenv";
 env.config();
@@ -18,10 +19,12 @@ const saltRounds = 10;
 var currentUserId = 0;
 var currentSensorId = "Select Sensor";
 
-app.use(cors({
-  origin: "http://localhost:3000", // Allow your React frontend
-  credentials: true // Allow cookies/session to work
-})); 
+app.use(
+  cors({
+    origin: "http://localhost:3000", // Allow your React frontend
+    credentials: true, // Allow cookies/session to work
+  })
+);
 
 // db intialitation
 const db = new pg.Client({
@@ -29,8 +32,9 @@ const db = new pg.Client({
   host: process.env.PG_HOST,
   database: process.env.PG_DATABASE,
   password: process.env.PG_PASSWORD,
-  port: process.env.PG_PORT,});
-db.connect()
+  port: process.env.PG_PORT,
+});
+db.connect();
 
 //session intialitation
 app.use(
@@ -42,15 +46,15 @@ app.use(
       secure: false, // Set to true if using HTTPS
       httpOnly: true,
       sameSite: "lax",
-      maxAge: 1000 * 60 * 60 * 24 // 1 day
-    }
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
+    },
   })
 );
 //Paspport intialisation
 app.use(passport.initialize());
 app.use(passport.session());
 
-//Common Midalware init 
+//Common Midalware init
 app.use(express.json());
 app.use(bodyParser.json());
 app.use(express.static("public"));
@@ -58,31 +62,95 @@ app.use(express.static("public"));
 ///////////////////////////////// START Athentiction API /////////////////////////////////////////////////
 
 // Passport Local Strategy
-passport.use(new LocalStrategy(
-  async (username, password, done) => {
+passport.use(
+  new LocalStrategy(async (username, password, done) => {
     console.log(username);
     console.log(password);
     try {
-      const result = await db.query('SELECT * FROM users WHERE email = $1', [username]);
+      const result = await db.query("SELECT * FROM users WHERE email = $1", [
+        username,
+      ]);
       if (result.rows.length === 0) {
-        return done(null, false, { message: 'Incorrect username, Please Try Again' });
+        return done(null, false, {
+          message: "Incorrect username, Please Try Again",
+        });
       }
-      
+
       const user = result.rows[0];
       console.log(user); // user data from database
       const isValid = await bcrypt.compare(password, user.password);
       console.log(isValid); // check if the user authenticated
-      
+
       if (!isValid) {
-        return done(null, false, { message: 'Incorrect password, Please Try Again' });
+        return done(null, false, {
+          message: "Incorrect password, Please Try Again",
+        });
       }
       return done(null, user);
     } catch (err) {
       return done(err);
     }
+  })
+);
+// Passport Google Strategy
+passport.use(
+  "google",
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: "http://localhost:5000/auth/google/secrets",
+      userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
+    },
+    async (accessToken, refreshToken, profile, cb) => {
+      try {
+        console.log(profile);
+        const result = await db.query("SELECT * FROM users WHERE email = $1", [
+          profile.email,
+        ]);
+        if (result.rows.length === 0) {
+          await db.query(
+            "INSERT INTO users (full_name, email, password) VALUES ($1, $2, $3)",
+            [
+              profile.given_name + " " + profile.family_name,
+              profile.email,
+              "google",
+            ]
+          );
+          // Now fetch the newly created user
+          const newResult = await db.query(
+            "SELECT * FROM users WHERE email = $1",
+            [profile.email]
+          );
+          //console.log(newResult.rows[0].user_id);
+          currentUserId = newResult.rows[0].user_id;
+          //console.log(currentUserId);
+          return cb(null, newResult.rows[0]);
+        } else {
+          return cb(null, result.rows[0]);
+        }
+      } catch (err) {
+        return cb(err);
+      }
+    }
+  )
+);
+app.get(
+  "/auth/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"], // this mean when the user logs in well tell them we try and grab hold of your public profile and your email.
+  })
+);
+app.get(
+  "/auth/google/secrets",
+  passport.authenticate("google", {
+    failureRedirect: "/auth/sign-in",
+  }),
+  (req, res) => {
+    // redirect to frontend home or dashboard after login
+    res.redirect("http://localhost:3000/admin/all-hives");
   }
-));
-
+);
 // Serialization
 passport.serializeUser((user, done) => {
   done(null, user.user_id);
@@ -90,128 +158,119 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser(async (id, done) => {
   try {
-    const result = await db.query('SELECT * FROM users WHERE user_id = $1', [id]);
+    const result = await db.query("SELECT * FROM users WHERE user_id = $1", [
+      id,
+    ]);
     done(null, result.rows[0]);
   } catch (err) {
     done(err);
   }
 });
 
-// Login 
-app.post('/api/login', (req, res, next) => {
-  passport.authenticate('local', (err, user, info) => {
+// Login
+app.post("/api/login", (req, res, next) => {
+  passport.authenticate("local", (err, user, info) => {
     if (err) {
-      return res.status(500).json({ 
+      return res.status(500).json({
         success: false,
-        error: "Server error. Please try again later."
+        error: "Server error. Please try again later.",
       });
     }
     if (!user) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        error: info.message || "Authentication failed"
+        error: info.message || "Authentication failed",
       });
     }
     req.logIn(user, (err) => {
       if (err) {
-        return res.status(500).json({ 
+        return res.status(500).json({
           success: false,
-          error: "Session error. Please try again."
+          error: "Session error. Please try again.",
         });
       }
       currentUserId = user.user_id; // Update global user ID
       console.log("current user id: " + currentUserId);
-      return res.json({ 
+      return res.json({
         success: true,
         user: {
           user_id: user.user_id,
-          email: user.email
-        }
+          email: user.email,
+        },
       });
     });
   })(req, res, next);
 });
 
-app.post('/api/register', async (req, res) => {
-  const { email, password } = req.body;
-  
+app.post("/api/register", async (req, res) => {
+  const { email, password, phone_number, full_name } = req.body;
+
   try {
     // Check if user exists
-    const userExists = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+    const userExists = await db.query("SELECT * FROM users WHERE email = $1", [
+      email,
+    ]);
     if (userExists.rows.length > 0) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ message: "User already exists" });
     }
-    
+
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
-    
-    // Create user
+
+    // Create user with phone number
     const newUser = await db.query(
-      'INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *',
-      [email, hashedPassword]
+      "INSERT INTO users (full_name, email, password, phone_number) VALUES ($1, $2, $3, $4) RETURNING *",
+      [full_name, email, hashedPassword, phone_number]
     );
-    
+
     // Login the new user
     req.login(newUser.rows[0], (err) => {
       if (err) {
-        return res.status(500).json({ message: 'Error logging in after registration' });
+        return res
+          .status(500)
+          .json({ message: "Error logging in after registration" });
       }
       return res.json({ success: true, user: newUser.rows[0] });
     });
   } catch (err) {
-    res.status(500).json({ message: 'Registration failed' });
+    res.status(500).json({ message: "Registration failed" });
   }
 });
 
-app.get('/api/user', (req, res) => {
-  if (req.isAuthenticated()) {
-    res.json({ user: req.user });
-  } else {
-    res.status(401).json({ message: 'Not authenticated' });
-  }
-});
-
-app.post('/api/logout', (req, res) => {
+app.post("/api/logout", (req, res) => {
   // Clear the currentUserId if you're using it
   currentUserId = null;
-  
+
   req.logout((err) => {
     if (err) {
-      console.error('Logout error:', err);
-      return res.status(500).json({ 
+      console.error("Logout error:", err);
+      return res.status(500).json({
         success: false,
-        error: 'Logout failed' 
+        error: "Logout failed",
       });
     }
-    
+
     // Destroy the session completely
     req.session.destroy((err) => {
       if (err) {
-        console.error('Session destruction error:', err);
+        console.error("Session destruction error:", err);
         return res.status(500).json({
           success: false,
-          error: 'Could not destroy session'
+          error: "Could not destroy session",
         });
       }
-      
+
       // Clear the cookie
-      res.clearCookie('connect.sid'); // or your session cookie name
-      return res.json({ 
+      res.clearCookie("connect.sid"); // or your session cookie name
+      return res.json({
         success: true,
-        message: 'Logged out successfully' 
+        message: "Logged out successfully",
       });
     });
   });
 });
 
-// Add endpoint to get active users (optional)
-app.get('/api/active-users', (req, res) => {
-  res.json({ currentUserId });
-});
-
-
 ///////////////////////////////// END Athentiction API /////////////////////////////////////////////////
-
 
 // Configure storage
 const storage = multer.diskStorage({
@@ -318,12 +377,13 @@ app.post("/admin/add-hive", async (req, res) => {
 getting hive list of specific user id
 */
 app.get("/admin/getAllHives", async (req, res) => {
-  if (req.isAuthenticated()){
+  if (req.isAuthenticated()) {
     console.log("user Authorized");
-  try {
-    // Get all hives with their latest sensor data in a single query
-    const result = await db.query(
-      `
+    console.log("user ID: " + currentUserId);
+    try {
+      // Get all hives with their latest sensor data in a single query
+      const result = await db.query(
+        `
       SELECT DISTINCT ON (b.sensor_id)
         b.sensor_id AS id,
         b.hive_name AS "hiveName",
@@ -346,15 +406,16 @@ app.get("/admin/getAllHives", async (req, res) => {
       WHERE b.user_id = $1
       ORDER BY b.sensor_id, sd.timestamp DESC
     `,
-      [currentUserId]
-    );
+        [currentUserId]
+      );
 
-    console.log("Complete hive data:", result.rows);
-    res.status(200).json(result.rows);
-  } catch (err) {
-    console.error("Error fetching hive data:", err);
-    res.status(500).json({ error: "Internal server error" });
-  }}else {
+      console.log("Complete hive data:", result.rows);
+      res.status(200).json(result.rows);
+    } catch (err) {
+      console.error("Error fetching hive data:", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  } else {
     console.log("User Unauthorized");
     res.status(401).json({ error: "Unauthorized" }); // Send proper 401 response
   }
@@ -390,7 +451,7 @@ app.get("/admin/getCurrentSensorData", async (req, res) => {
 });
 app.get("/admin/sensor-ids", async (req, res) => {
   try {
-    const result = await db.query("SELECT sensor_id FROM beehives");
+    const result = await db.query("SELECT sensor_id FROM beehives where user_id = $1",[currentUserId]);
     res.json(result.rows); // sends array of { sensor_id: value }
   } catch (err) {
     console.error("Error fetching sensor_ids:", err);
@@ -402,7 +463,9 @@ app.get("/admin/getHiveLocation", async (req, res) => {
   const { latitude, longitude } = req.query;
 
   if (!latitude || !longitude) {
-    return res.status(400).json({ error: "Latitude and longitude are required" });
+    return res
+      .status(400)
+      .json({ error: "Latitude and longitude are required" });
   }
 
   try {
@@ -422,10 +485,11 @@ app.get("/admin/getHiveLocation", async (req, res) => {
       }
     );
 
-    const city = response.data.address?.city || 
-                 response.data.address?.town || 
-                 response.data.address?.village || 
-                 null;
+    const city =
+      response.data.address?.city ||
+      response.data.address?.town ||
+      response.data.address?.village ||
+      null;
 
     if (!city) {
       return res.status(404).json({ error: "City not found in location data" });
@@ -494,23 +558,27 @@ app.post("/admin/edit-hive", async (req, res) => {
     }
 
     // 1. First, get the hive_id from the sensor_id
-    const getHiveIdQuery = 'SELECT hive_id FROM beehives WHERE sensor_id = $1';
+    const getHiveIdQuery = "SELECT hive_id FROM beehives WHERE sensor_id = $1";
     const getHiveIdValues = [sensorId];
     const result = await db.query(getHiveIdQuery, getHiveIdValues);
-    
+
     if (result.rows.length === 0) {
       return res.status(404).json({ message: "Hive not found" });
     }
-    
+
     const hiveId = result.rows[0].hive_id;
     console.log("Hive ID to update:", hiveId);
 
     // 2. If newSensorid is provided and not empty, check if it already exists
     if (newSensorid && newSensorid.trim() !== "") {
-      const sensorIdResponse = await axios.get("http://localhost:5000/admin/sensor-ids");
+      const sensorIdResponse = await axios.get(
+        "http://localhost:5000/admin/sensor-ids"
+      );
       const sensorIds = sensorIdResponse.data; // array of { sensor_id: value }
 
-      const exists = sensorIds.some((obj) => obj.sensor_id === newSensorid.trim());
+      const exists = sensorIds.some(
+        (obj) => obj.sensor_id === newSensorid.trim()
+      );
       if (exists) {
         return res.status(400).json({ message: "Sensor ID already exists." });
       }
@@ -549,7 +617,7 @@ app.post("/admin/edit-hive", async (req, res) => {
 
     res.status(200).json({
       message: "Hive updated successfully",
-      updatedFields: updateParts.map(part => part.split(' = ')[0])
+      updatedFields: updateParts.map((part) => part.split(" = ")[0]),
     });
   } catch (err) {
     console.error(err);
@@ -559,5 +627,3 @@ app.post("/admin/edit-hive", async (req, res) => {
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
-
-

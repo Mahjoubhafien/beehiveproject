@@ -3,8 +3,11 @@ import { FcGoogle } from "react-icons/fc";
 import Checkbox from "components/checkbox";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Alert from '@mui/material/Alert';
+import CheckIcon from '@mui/icons-material/Check';
 
 export default function SignIn() {
+  const [full_name, setFull_name] = useState("Beekeeper!")
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -13,12 +16,56 @@ export default function SignIn() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUpSecc, setIsSignUpSecc] = useState(false);
 
   const navigate = useNavigate();
 
 const signUpHandler = async () => {
-  
-}
+  // Validate inputs
+  if (password !== confirmPassword) {
+    setError("Password doesn't match!");
+    return;
+  }
+  if (phoneNumber === '') {
+    setError("Phone Number can't be empty!");
+    return;
+  }
+  if (!email || !password) {
+    setError("Email and password are required!");
+    return;
+  }
+  setIsLoading(true);
+  setError("");
+
+  try {
+    const response = await fetch('http://localhost:5000/api/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        password,
+        phone_number: phoneNumber,
+        full_name: full_name
+      }),
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Registration failed');
+    }
+
+    // If registration is successful
+    setIsSignUp(false);
+    setIsSignUpSecc(true)
+    //navigate('/admin/all-hives'); // navigate to main page 
+  } catch (err) {
+    setError(err.message || 'An error occurred during registration');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
 const signInHandler = async () => {
   setIsLoading(true);
@@ -51,9 +98,11 @@ const signInHandler = async () => {
   }
 };
 
-  const handleGoogleLogin = () => {
-    window.location.href = 'http://localhost:5000/api/auth/google';
-  };
+const handleGoogleLogin = () => {
+  window.location.href = 'http://localhost:5000/auth/google';
+}
+ 
+
 
   return (
     <div className="mt-16 mb-16 flex h-full w-full items-center justify-center px-2 md:mx-0 md:px-0 lg:mb-10 lg:items-center lg:justify-start">
@@ -88,6 +137,24 @@ const signInHandler = async () => {
             {error}
           </div>
         )}
+        {/* Resgister succefull message */}
+        {isSignUpSecc ? 
+        <Alert icon={<CheckIcon fontSize="inherit" />} severity="success">
+  Registration successful! Now you can LogIn.
+</Alert>: null}
+         {isSignUp ? (
+  // full name input
+  <InputField
+    variant="auth"
+    extra="mb-3"
+    label="Full Name*"
+    placeholder="Flen ben fulen"
+    id="fullName"
+    type="text"
+    value={full_name}
+    onChange={(e) => setFull_name(e.target.value)}
+  />
+) : null}
 
         {/* Email */}
         <InputField
