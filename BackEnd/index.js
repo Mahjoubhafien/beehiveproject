@@ -15,7 +15,7 @@ env.config();
 
 const app = express();
 const port = 5000;
-const saltRounds = 10;
+//const saltRounds = 10;
 var currentUserId = 0;
 var currentSensorId = "Select Sensor";
 
@@ -124,9 +124,14 @@ passport.use(
           );
           //console.log(newResult.rows[0].user_id);
           currentUserId = newResult.rows[0].user_id;
-          //console.log(currentUserId);
+          console.log(currentUserId);
           return cb(null, newResult.rows[0]);
         } else {
+          const newResult = await db.query(
+            "SELECT * FROM users WHERE email = $1",
+            [profile.email]
+          );
+          currentUserId = newResult.rows[0].user_id;
           return cb(null, result.rows[0]);
         }
       } catch (err) {
