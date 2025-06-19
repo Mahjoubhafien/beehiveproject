@@ -18,6 +18,15 @@ const port = 5000;
 //const saltRounds = 10;
 var currentUserId = 0;
 var currentSensorId = "Select Sensor";
+//SMS Alerts Variables
+var config = {
+    MIN_TEMP: 32,
+    MAX_TEMP: 36,
+    MIN_HUMIDITY: 50,
+    MAX_HUMIDITY: 70,
+    isAlertsON: true
+};
+
 
 app.use(
   cors({
@@ -629,6 +638,30 @@ app.post("/admin/edit-hive", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+//SMS Alerts API 
+// === POST API to update config from React frontend ===
+app.post('/api/alert-config', (req, res) => {
+    const { MIN_TEMP, MAX_TEMP, MIN_HUMIDITY, MAX_HUMIDITY, isAlertsON } = req.body;
+
+    // Update if values are provided
+    if (typeof MIN_TEMP === 'number') config.MIN_TEMP = MIN_TEMP;
+    if (typeof MAX_TEMP === 'number') config.MAX_TEMP = MAX_TEMP;
+    if (typeof MIN_HUMIDITY === 'number') config.MIN_HUMIDITY = MIN_HUMIDITY;
+    if (typeof MAX_HUMIDITY === 'number') config.MAX_HUMIDITY = MAX_HUMIDITY;
+    if (typeof isAlertsON === 'boolean') config.isAlertsON = isAlertsON;
+
+    res.json({ message: 'Alert config updated successfully', config });
+});
+
+// === GET API to be used by SIM800C ===
+app.get('/api/alert-config', (req, res) => {
+    res.json(config);
+});
+
+
+
+
+
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
