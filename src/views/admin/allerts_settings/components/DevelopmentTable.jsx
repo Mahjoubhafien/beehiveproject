@@ -10,9 +10,9 @@ function SmsAlertsTable(props) {
     return saved === 'true' ? true : false;
   });  
   // State for threshold values
-  const [tempMin, setTempMin] = useState(10);
-  const [tempMax, setTempMax] = useState(30);
-  const [humidityMin, setHumidityMin] = useState(30);
+  const [tempMin, setTempMin] = useState(32);
+  const [tempMax, setTempMax] = useState(36);
+  const [humidityMin, setHumidityMin] = useState(50);
   const [humidityMax, setHumidityMax] = useState(70);
   const [weightMin, setWeightMin] = useState(10);
   const [weightMax, setWeightMax] = useState(100);

@@ -4,6 +4,7 @@ import { HiX } from "react-icons/hi";
 import Links from "./components/Links";
 import routes from "routes.js";
 import WeatherWidget from "./components/WeatherCard";
+import bee from "assets/img/layout/bee (1).png"
 const Sidebar = ({ open, onClose }) => {
   const [lon, setLon] = useState("0");
   const [lat, setLat] = useState("0");
@@ -41,7 +42,7 @@ const Sidebar = ({ open, onClose }) => {
 
       <div className={`mx-[56px] mt-[50px] flex items-center`}>
         <div className="ml-1 mt-1 h-2.5 font-poppins text-[26px] font-bold uppercase text-navy-700 dark:text-white">
-          Beehive <span class="font-medium">V0.3</span>
+          BeeTrack <img src={bee} alt="Bee Icon" className="inline w-6 h-6 mx-1" /><span class="font-medium"></span>
         </div>
       </div>
       <div class="mb-7 mt-[58px] h-px bg-gray-300 dark:bg-white/30" />
