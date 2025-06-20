@@ -39,7 +39,7 @@ useEffect(() => {
     const fetchHives = async () => {
       try {
         setIsLoading(true); // Start loading
-        const response = await fetch("http://localhost:5000/admin/getAllHives", {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/admin/getAllHives`, {
           credentials: "include",
           headers: {
             "Cache-Control": "no-cache",
@@ -128,7 +128,7 @@ useEffect(() => {
 
     /////////// adding hive query ///////////////
     try {
-      const response = await fetch("http://localhost:5000/admin/add-hive", {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/admin/add-hive`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -159,8 +159,13 @@ useEffect(() => {
       const fetchHives = async () => {
         try {
           const response = await fetch(
-            "http://localhost:5000/admin/getAllHives", {
-      credentials: "include" // ← IMPORTANT
+            `${process.env.REACT_APP_API_URL}/admin/getAllHives`, {
+      credentials: "include", // ← IMPORTANT
+                headers: {
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+          },
+
     });
           const data = await response.json();
           setlistOfHives(data);
@@ -219,7 +224,13 @@ useEffect(() => {
   ///// update hives card after editing ////////
   const updateHivesCard = async () => {
     try {
-      const response = await fetch("http://localhost:5000/admin/getAllHives");
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/admin/getAllHives`, {
+          credentials: "include",
+          headers: {
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+          },
+        });
       const data = await response.json();
       setlistOfHives(data);
       editWarnnigHandler("Hive updated data received successfully");
@@ -285,7 +296,7 @@ useEffect(() => {
             hiveName={hive.hiveName}
             image={
               hive.image_url
-                ? `${"http://localhost:5000"}${hive.image_url}`
+                ? `${process.env.REACT_APP_API_URL}${hive.image_url}`
                 : BEE1
             }
             Temperature={hive.temperature}

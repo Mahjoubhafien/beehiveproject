@@ -46,7 +46,7 @@ const Dashboard = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/admin/getCurrentSensorData"
+        `${process.env.REACT_APP_API_URL}/admin/getCurrentSensorData`
       );
       const sensorData = await response.json();
       const latest = sensorData[sensorData.length - 1];
@@ -93,11 +93,9 @@ const Dashboard = () => {
     const fetchSensorLocation = async () => {
         if (latestSensor && latestSensor.latitude && latestSensor.longitude) {
             try {
-                const response = await fetch(
-                    `http://localhost:5000/admin/getHiveLocation?latitude=${
-                        latestSensor.latitude
-                    }&longitude=${latestSensor.longitude}`
-                );
+  const response = await fetch(
+    `${process.env.REACT_APP_API_URL}/admin/getHiveLocation?latitude=${latestSensor.latitude}&longitude=${latestSensor.longitude}`
+  );
                 const location = await response.json();
                 setSensorLoation(location.city);
             } catch (err) {
@@ -113,7 +111,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchSensorIds = async () => {
       try {
-        const response = await fetch("http://localhost:5000/admin/sensor-ids");
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/admin/sensor-ids`);
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }
@@ -130,10 +128,10 @@ const Dashboard = () => {
 
   useEffect(() => {
     const fetchCurrentSensorId = async () => {
-      try {
-        const response = await fetch(
-          "http://localhost:5000/admin/current-sensor"
-        );
+try {
+  const response = await fetch(
+    `${process.env.REACT_APP_API_URL}/admin/current-sensor`
+  );
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }

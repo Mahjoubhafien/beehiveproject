@@ -30,7 +30,7 @@ var config = {
 
 app.use(
   cors({
-    origin: "http://localhost:3000", // Allow your React frontend
+    origin: process.env.FRONTEND_ORIGIN, // Allow your React frontend
     credentials: true, // Allow cookies/session to work
   })
 );
@@ -108,7 +108,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "http://localhost:5000/auth/google/secrets",
+      callbackURL: process.env.GOOGLE_CALLBACK_URL,
       userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
     },
     async (accessToken, refreshToken, profile, cb) => {
@@ -162,7 +162,7 @@ app.get(
   }),
   (req, res) => {
     // redirect to frontend home or dashboard after login
-    res.redirect("http://localhost:3000/admin/all-hives");
+    res.redirect(process.env.FRONTEND_URL || "http://localhost:3000/admin/all-hives");
   }
 );
 // Serialization
@@ -586,7 +586,7 @@ app.post("/admin/edit-hive", async (req, res) => {
     // 2. If newSensorid is provided and not empty, check if it already exists
     if (newSensorid && newSensorid.trim() !== "") {
       const sensorIdResponse = await axios.get(
-        "http://localhost:5000/admin/sensor-ids"
+        `${process.env.REACT_APP_API_URL}/admin/sensor-ids`
       );
       const sensorIds = sensorIdResponse.data; // array of { sensor_id: value }
 
@@ -662,6 +662,6 @@ app.get('/api/alert-config', (req, res) => {
 
 
 
-app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server running on http://0.0.0.0:${port}`);
 });

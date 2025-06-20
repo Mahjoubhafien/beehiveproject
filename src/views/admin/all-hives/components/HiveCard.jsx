@@ -79,7 +79,7 @@ const HiveCard = ({
   useEffect(() => {
     const sendHiveState = async () => {
       try {
-        await fetch("http://localhost:5000/admin/insertState", {
+        await fetch(`${process.env.REACT_APP_API_URL}/admin/insertState`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -100,7 +100,7 @@ const HiveCard = ({
     const fetchLocation = async () => {
       try {
         const response = await fetch(
-          `http://localhost:5000/admin/getHiveLocation?latitude=${Latitude}&longitude=${Longitude}`
+          `${process.env.REACT_APP_API_URL}/admin/getHiveLocation?latitude=${Latitude}&longitude=${Longitude}`
         );
         const locationData = await response.json();
         setSensorLocation(locationData.city); // e.g., "Tunis"
@@ -152,7 +152,7 @@ const HiveCard = ({
   const editHiveHandler = async () => {
     setIsEditButtenPresed(!IsEditButtenPresed);
     try {
-      const response = await fetch("http://localhost:5000/admin/edit-hive", {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/admin/edit-hive`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -191,7 +191,7 @@ const HiveCard = ({
             <button
               onClick={async () => {
                 await fetch(
-                  "http://localhost:5000/admin/detailed-dashboard/" + id
+                  `${process.env.REACT_APP_API_URL}/admin/detailed-dashboard/${id}`
                 );
                 window.location.href = link;
               }}
@@ -294,121 +294,101 @@ const HiveCard = ({
             )}
           </div>
         </div>
-        {/*    Temperature Field */}
+{/* Temperature Field and other sensor data */}
+<div className="flex flex-col space-y-2 md:flex-row md:flex-wrap md:items-center md:justify-between md:space-y-0">
+  {/* Temperature Field */}
+  {!IsEditButtenPresed && (
+    <div className="flex">
+      <p className="text-sm mb-2 font-bold text-red-500 dark:text-white">
+        <DeviceThermostatIcon /> Temperature:{" "}
+        {Temperature !== null ? (
+          <span>{Temperature} °C</span>
+        ) : (
+          <span className="text-gray-500">Waiting for data...</span>
+        )}
+      </p>
+    </div>
+  )}
 
-        <div className="flex items-center justify-between md:flex-col md:items-start lg:flex-row lg:justify-between xl:flex-col 2xl:items-start 3xl:flex-row 3xl:items-center 3xl:justify-between">
-          {!IsEditButtenPresed ? (
-            <div className="flex">
-              <p className="mb-2 text-sm font-bold text-red-500 dark:text-white">
-                <DeviceThermostatIcon /> Temperature:{" "}
-                {Temperature !== null ? (
-                  <span>{Temperature} °C</span>
-                ) : (
-                  <span style={{ color: "grey" }}>Waiting for data...</span>
-                )}
-              </p>
-            </div>
-          ) : null}
+  {/* Humidity Field */}
+  {!IsEditButtenPresed && (
+    <div className="flex">
+      <p className="text-sm mb-2 font-bold text-blue-500 dark:text-white">
+        <WaterDropIcon /> Humidity:{" "}
+        {Humidity !== null ? (
+          <span>{Humidity} %</span>
+        ) : (
+          <span className="text-gray-500">Waiting for data...</span>
+        )}
+      </p>
+    </div>
+  )}
 
-          {/*    Humidity Field */}
-          {!IsEditButtenPresed ? (
-            <div className="flex">
-              <p className="mb-2 text-sm font-bold text-blue-500 dark:text-white">
-                <WaterDropIcon /> Humidity:{" "}
-                {Humidity !== null ? (
-                  <span>{Humidity} %</span>
-                ) : (
-                  <span style={{ color: "grey" }}>Waiting for data...</span>
-                )}
-              </p>
-            </div>
-          ) : null}
-          {/*    GPS Field */}
-          {!IsEditButtenPresed ? (
-            <div className="text-grey-500 mb-2 flex items-center text-sm font-bold dark:text-white">
-              <MapIcon className="mr-1" />
-              <span
-                style={{
-                  backgroundColor: !isGpsCorrect ? "#ffebee" : "transparent",
-                  borderRadius: "4px",
-                  border: !isGpsCorrect ? "1px solid #f44336" : "none",
-                  display: "inline-block",
-                }}
-              >
-                {!sensorLocation ? (
-                  <span style={{ color: "#9e9e9e", fontStyle: "italic" }}>
-                    Waiting for GPS...
-                  </span>
-                ) : isGpsCorrect ? (
-                  <span style={{ color: "black"}}>
-                    Verified: {sensorLocation}
-                  </span>
-                ) : (
-                  <span style={{ color: "#d32f2f" }}>
-                    <strong>Mismatch!</strong> You entered "
-                    <span style={{ textDecoration: "underline" }}>
-                      {Location}
-                    </span>
-                    ", but GPS detected "
-                    <span style={{ textDecoration: "underline" }}>
-                      {sensorLocation}
-                    </span>
-                    ".
-                  </span>
-                )}
-              </span>
-              {Latitude && Longitude && (
-                <Tooltip title="Real Time Location" arrow>
-                  {" "}
-                  <MdGpsFixed
-                    style={{
-                      color: isRed ? "red" : "white",
-                      transition: "color 0.3s ease",
-                      marginLeft: "0.5rem",
-                    }}
-                  />
-                </Tooltip>
-              )}
-            </div>
-          ) : null}
-          {/*    STATE Field */}
-          {!IsEditButtenPresed ? (
-            <div className="flex">
-              <p className="mb-2 text-sm font-bold dark:text-white">
-                {healthStatus === "Healthy" ? (
-                  <span className="text-green-500">
-                    <GppGoodIcon /> State: Healthy
-                  </span>
-                ) : healthStatus === "Unhealthy" ? (
-                  <span className="text-orange-500">
-                    <GppBadIcon /> State: Unhealthy
-                  </span>
-                ) : (
-                  <span className="text-gray-500">
-                    <GppMaybeIcon /> State: No Data
-                  </span>
-                )}
-              </p>
-            </div>
-          ) : null}
-          {/*    Last Data Received Field */}
-          {!IsEditButtenPresed ? (
-            <p className="mb-1 text-sm font-medium text-gray-600 md:mt-2">
-              Last data {lastDataR}
-            </p>
-          ) : null}
-          {/*<button
-            onClick={async () => {
-              await fetch(
-                "http://localhost:5000/admin/detailed-dashboard/" + id
-              );
-              window.location.href = link;
-            }}
-            className="linear rounded-[20px] bg-brand-900 px-4 py-2 text-base font-medium text-white transition duration-200 hover:bg-brand-800 active:bg-brand-700 dark:bg-brand-400 dark:hover:bg-brand-300 dark:active:opacity-90"
-          >
-            More Detail
-          </button>*/}
-        </div>
+  {/* GPS Field */}
+  {!IsEditButtenPresed && (
+    <div className="text-grey-500 !mb-2 flex items-center text-sm font-bold dark:text-white">
+      <MapIcon className="mr-1" />
+      <span
+        className={
+          !isGpsCorrect
+            ? "bg-red-50 rounded border border-red-500 inline-block"
+            : "inline-block"
+        }
+      >
+        {!sensorLocation ? (
+          <span className="text-gray-500 italic">Waiting for GPS...</span>
+        ) : isGpsCorrect ? (
+          <span className="text-black">Verified: {sensorLocation}</span>
+        ) : (
+          <span className="text-red-700">
+            <strong>Mismatch!</strong> You entered "
+            <span className="underline">{Location}</span>
+            ", but GPS detected "
+            <span className="underline">{sensorLocation}</span>
+            ".
+          </span>
+        )}
+      </span>
+      {Latitude && Longitude && (
+        <Tooltip title="Real Time Location" arrow>
+          <MdGpsFixed
+            className={`ml-2 transition-colors duration-300 ${
+              isRed ? "text-red-500" : "text-white"
+            }`}
+          />
+        </Tooltip>
+      )}
+    </div>
+  )}
+
+  {/* STATE Field */}
+  {!IsEditButtenPresed && (
+    <div className="flex">
+      <p className="text-sm mb-2 font-bold dark:text-white">
+        {healthStatus === "Healthy" ? (
+          <span className="text-green-500">
+            <GppGoodIcon /> State: Healthy
+          </span>
+        ) : healthStatus === "Unhealthy" ? (
+          <span className="text-orange-500">
+            <GppBadIcon /> State: Unhealthy
+          </span>
+        ) : (
+          <span className="text-gray-500">
+            <GppMaybeIcon /> State: No Data
+          </span>
+        )}
+      </p>
+    </div>
+  )}
+
+  {/* Last Data Received Field */}
+  {!IsEditButtenPresed && (
+    <p className="text-sm font-medium text-gray-600 md:mt-0">
+      Last data {lastDataR}
+    </p>
+  )}
+</div>
       </div>
     </Card>
   );

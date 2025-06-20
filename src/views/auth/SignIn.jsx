@@ -38,7 +38,7 @@ const signUpHandler = async () => {
   setError("");
 
   try {
-    const response = await fetch('http://localhost:5000/api/register', {
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/api/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -72,7 +72,7 @@ const signInHandler = async () => {
   setError("");
 
   try {
-    const response = await fetch('http://localhost:5000/api/login', {
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/api/login`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -99,7 +99,7 @@ const signInHandler = async () => {
 };
 
 const handleGoogleLogin = () => {
-  window.location.href = 'http://localhost:5000/auth/google';
+  window.location.href = `${process.env.REACT_APP_API_URL}/auth/google`;
 }
  
 

@@ -4,7 +4,7 @@ import React from "react";
 import MainDashboard from "views/admin/detailed-dashboard";
 import AllHives from "views/admin/all-hives";
 import Profile from "views/admin/profile";
-import DataTables from "views/admin/tables";
+import DataTables from "views/admin/allerts_settings";
 import RTLDefault from "views/rtl/default";
 import { GiBeehive } from "react-icons/gi";
 import { IoMdSettings } from "react-icons/io";

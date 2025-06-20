@@ -46,7 +46,7 @@ const UploadPhotoHandler = (event) => {
     formData.append('photo', selectedFile);
 
     try {
-      const response = await fetch('http://localhost:5000/admin/upload', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/admin/upload`, {
         method: 'POST',
         body: formData,
         // Don't set Content-Type header - the browser will set it with the correct boundary
