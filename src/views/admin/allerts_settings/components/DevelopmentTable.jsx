@@ -1,196 +1,186 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import CardMenu from "components/card/CardMenu";
-import { DiApple } from "react-icons/di";
-import { DiAndroid } from "react-icons/di";
-import { DiWindows } from "react-icons/di";
 import Card from "components/card";
-import Progress from "components/progress";
+import { FaSms } from "react-icons/fa";
 
-import {
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
+function SmsAlertsTable(props) {
+// Initialize state from localStorage or use default
+  const [smsEnabled, setSmsEnabled] = useState(() => {
+    const saved = localStorage.getItem('smsEnabled');
+    return saved === 'true' ? true : false;
+  });  
+  // State for threshold values
+  const [tempMin, setTempMin] = useState(10);
+  const [tempMax, setTempMax] = useState(30);
+  const [humidityMin, setHumidityMin] = useState(30);
+  const [humidityMax, setHumidityMax] = useState(70);
+  const [weightMin, setWeightMin] = useState(10);
+  const [weightMax, setWeightMax] = useState(100);
 
-function CheckTable(props) {
-  const { tableData } = props;
-  const [sorting, setSorting] = React.useState([]);
-  let defaultData = tableData;
-  const columns = [
-    columnHelper.accessor("name", {
-      id: "name",
-      header: () => (
-        <p className="text-sm font-bold text-gray-600 dark:text-white">NAME</p>
-      ),
-      cell: (info) => (
-        <p className="text-sm font-bold text-navy-700 dark:text-white">
-          {info.getValue()}
-        </p>
-      ),
-    }),
-    columnHelper.accessor("tech", {
-      id: "tech",
-      header: () => (
-        <p className="text-sm font-bold text-gray-600 dark:text-white">TECH</p>
-      ),
-      cell: (info) => (
-        <div className="flex items-center gap-2">
-          {info.getValue().map((item, key) => {
-            if (item === "apple") {
-              return (
-                <div
-                  key={key}
-                  className="text-[22px] text-gray-600 dark:text-white"
-                >
-                  <DiApple />
-                </div>
-              );
-            } else if (item === "android") {
-              return (
-                <div
-                  key={key}
-                  className="text-[21px] text-gray-600 dark:text-white"
-                >
-                  <DiAndroid />
-                </div>
-              );
-            } else if (item === "windows") {
-              return (
-                <div
-                  key={key}
-                  className="text-xl text-gray-600 dark:text-white"
-                >
-                  <DiWindows />
-                </div>
-              );
-            } else return null;
-          })}
-        </div>
-      ),
-    }),
-    columnHelper.accessor("progress", {
-      id: "progress",
-      header: () => (
-        <p className="text-sm font-bold text-gray-600 dark:text-white">
-          PROGRESS
-        </p>
-      ),
-      cell: (info) => (
-        <p className="text-sm font-bold text-navy-700 dark:text-white">
-          {info.getValue()}
-        </p>
-      ),
-    }),
-    columnHelper.accessor("date", {
-      id: "date",
-      header: () => (
-        <p className="text-sm font-bold text-gray-600 dark:text-white">DATE</p>
-      ),
-      cell: (info) => (
-        <p className="text-sm font-bold text-navy-700 dark:text-white">
-          {info.getValue()}
-        </p>
-      ),
-    }),
-    columnHelper.accessor("progress", {
-      id: "quantity",
-      header: () => (
-        <p className="text-sm font-bold text-gray-600 dark:text-white">
-          QUANTITY
-        </p>
-      ),
-      cell: (info) => (
-        <div className="flex items-center gap-3">
-          <p className="text-sm font-bold text-navy-700 dark:text-white">
-            {info.getValue()}%
-          </p>
-          <Progress width="w-[68px]" value={info.getValue()} />
-        </div>
-      ),
-    }),
-  ]; // eslint-disable-next-line
-  const [data, setData] = React.useState(() => [...defaultData]);
-  const table = useReactTable({
-    data,
-    columns,
-    state: {
-      sorting,
-    },
-    onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    debugTable: true,
-  });
+  // Save states to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('smsEnabled', smsEnabled);
+  }, [smsEnabled]);
+
+  const handleSave = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/alert-config`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          MIN_TEMP: tempMin,
+          MAX_TEMP: tempMax,
+          MIN_HUMIDITY: humidityMin,
+          MAX_HUMIDITY: humidityMax,
+          isAlertsON: smsEnabled
+        })
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to save settings');
+      }
+
+      console.log("API Response:", data);
+      alert("Settings saved successfully!");
+    } catch (error) {
+      console.error("Failed to save settings:", error);
+      alert(error.message || "Failed to save settings. Please try again.");
+    }
+  };
+
   return (
     <Card extra={"w-full h-full sm:overflow-auto px-6"}>
       <header className="relative flex items-center justify-between pt-4">
-        <div className="text-xl font-bold text-navy-700 dark:text-white">
-          Check Table
-        </div>
-
+        <div className="flex items-center gap-2 text-xl font-bold text-navy-700 dark:text-white">
+          SMS Alerts Settings <FaSms />
+        </div>        
         <CardMenu />
       </header>
 
-      <div className="mt-8 overflow-x-scroll xl:overflow-x-hidden">
-        <table className="w-full">
-          <thead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id} className="!border-px !border-gray-400">
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <th
-                      key={header.id}
-                      colSpan={header.colSpan}
-                      onClick={header.column.getToggleSortingHandler()}
-                      className="cursor-pointer border-b-[1px] border-gray-200 pt-4 pb-2 pr-4 text-start"
-                    >
-                      <div className="items-center justify-between text-xs text-gray-200">
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                        {{
-                          asc: "",
-                          desc: "",
-                        }[header.column.getIsSorted()] ?? null}
-                      </div>
-                    </th>
-                  );
-                })}
+      <div className="mt-8">
+        {/* SMS Notification Switch */}
+        <div className="mb-4 flex items-center justify-between rounded-lg bg-gray-100 p-4 dark:bg-gray-800">
+          <div className="flex items-center">
+            <span className="mr-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Enable SMS Notification
+            </span>
+            <label className="relative inline-flex cursor-pointer items-center">
+              <input 
+                type="checkbox" 
+                className="peer sr-only" 
+                checked={smsEnabled}
+                onChange={() => setSmsEnabled(!smsEnabled)}
+              />
+              <div className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-green-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:border-gray-600 dark:bg-gray-700 dark:peer-focus:ring-blue-800"></div>
+            </label>
+          </div>
+        </div>
+
+        {/* Threshold Settings Table */}
+        <div className="overflow-x-scroll xl:overflow-x-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="!border-px !border-gray-400">
+                <th className="cursor-pointer border-b-[1px] border-gray-200 pt-4 pb-2 pr-4 text-start">
+                  <div className="items-center justify-between text-xs text-gray-200">
+                    Parameter
+                  </div>
+                </th>
+                <th className="cursor-pointer border-b-[1px] border-gray-200 pt-4 pb-2 pr-4 text-start">
+                  <div className="items-center justify-between text-xs text-gray-200">
+                    Min Threshold
+                  </div>
+                </th>
+                <th className="cursor-pointer border-b-[1px] border-gray-200 pt-4 pb-2 pr-4 text-start">
+                  <div className="items-center justify-between text-xs text-gray-200">
+                    Max Threshold
+                  </div>
+                </th>
               </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table
-              .getRowModel()
-              .rows.slice(0, 5)
-              .map((row) => {
-                return (
-                  <tr key={row.id}>
-                    {row.getVisibleCells().map((cell) => {
-                      return (
-                        <td
-                          key={cell.id}
-                          className="min-w-[150px] border-white/0 py-3  pr-4"
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {/* Temperature Row */}
+              <tr>
+                <td className="min-w-[150px] border-white/0 py-3 pr-4 font-medium">Temperature</td>
+                <td className="min-w-[150px] border-white/0 py-3 pr-4">
+                  <input 
+                    type="number" 
+                    value={tempMin}
+                    onChange={(e) => setTempMin(Number(e.target.value))}
+                    className="w-16 rounded border border-gray-300 px-2 py-1 text-sm dark:bg-gray-800 dark:border-gray-700"
+                  /> °C
+                </td>
+                <td className="min-w-[150px] border-white/0 py-3 pr-4">
+                  <input 
+                    type="number" 
+                    value={tempMax}
+                    onChange={(e) => setTempMax(Number(e.target.value))}
+                    className="w-16 rounded border border-gray-300 px-2 py-1 text-sm dark:bg-gray-800 dark:border-gray-700"
+                  /> °C
+                </td>
+              </tr>
+              
+              {/* Humidity Row */}
+              <tr>
+                <td className="min-w-[150px] border-white/0 py-3 pr-4 font-medium">Humidity</td>
+                <td className="min-w-[150px] border-white/0 py-3 pr-4">
+                  <input 
+                    type="number" 
+                    value={humidityMin}
+                    onChange={(e) => setHumidityMin(Number(e.target.value))}
+                    className="w-16 rounded border border-gray-300 px-2 py-1 text-sm dark:bg-gray-800 dark:border-gray-700"
+                  /> %
+                </td>
+                <td className="min-w-[150px] border-white/0 py-3 pr-4">
+                  <input 
+                    type="number" 
+                    value={humidityMax}
+                    onChange={(e) => setHumidityMax(Number(e.target.value))}
+                    className="w-16 rounded border border-gray-300 px-2 py-1 text-sm dark:bg-gray-800 dark:border-gray-700"
+                  /> %
+                </td>
+              </tr>
+              
+              {/* Weight Row */}
+              <tr>
+                <td className="min-w-[150px] border-white/0 py-3 pr-4 font-medium">Weight</td>
+                <td className="min-w-[150px] border-white/0 py-3 pr-4">
+                  <input 
+                    type="number" 
+                    value={weightMin}
+                    onChange={(e) => setWeightMin(Number(e.target.value))}
+                    className="w-16 rounded border border-gray-300 px-2 py-1 text-sm dark:bg-gray-800 dark:border-gray-700"
+                  /> Kg
+                </td>
+                <td className="min-w-[150px] border-white/0 py-3 pr-4">
+                  <input 
+                    type="number" 
+                    value={weightMax}
+                    onChange={(e) => setWeightMax(Number(e.target.value))}
+                    className="w-16 rounded border border-gray-300 px-2 py-1 text-sm dark:bg-gray-800 dark:border-gray-700"
+                  /> Kg
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* Centered Save Button */}
+        <div className="mt-6 flex justify-center mb-5">
+          <button
+            onClick={handleSave}
+            className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+          >
+            Save Settings
+          </button>
+        </div>
       </div>
     </Card>
   );
 }
 
-export default CheckTable;
-const columnHelper = createColumnHelper();
+export default SmsAlertsTable;
