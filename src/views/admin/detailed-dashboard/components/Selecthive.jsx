@@ -42,9 +42,12 @@ const navigate = useNavigate();
 
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/admin/update-current-sensor`, {
+        credentials: "include",
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          "Cache-Control": "no-cache",
+          "Pragma": "no-cache",
         },
         body: JSON.stringify({ id: selectedId }),
       });

@@ -16,14 +16,15 @@ env.config();
 const app = express();
 const port = 5000;
 //const saltRounds = 10;
-var currentUserId = 0;
-var currentSensorId = "Select Sensor";
+//var currentSensorId = "Select Sensor";
 //SMS Alerts Variables
 var config = {
     MIN_TEMP: 32,
     MAX_TEMP: 36,
     MIN_HUMIDITY: 50,
     MAX_HUMIDITY: 70,
+    MIN_WEIGHT: 10,
+    MAX_WEIGHT: 100,
     isAlertsON: true
 };
 
@@ -117,31 +118,25 @@ passport.use(
         const result = await db.query("SELECT * FROM users WHERE email = $1", [
           profile.email,
         ]);
+
         if (result.rows.length === 0) {
           await db.query(
             "INSERT INTO users (full_name, email, password) VALUES ($1, $2, $3)",
             [
               profile.given_name + " " + profile.family_name,
               profile.email,
-              "google",
+              "google", // dummy password, since it's Google auth
             ]
           );
-          // Now fetch the newly created user
-          const newResult = await db.query(
+
+          const newUser = await db.query(
             "SELECT * FROM users WHERE email = $1",
             [profile.email]
           );
-          //console.log(newResult.rows[0].user_id);
-          currentUserId = newResult.rows[0].user_id;
-          console.log(currentUserId);
-          return cb(null, newResult.rows[0]);
+
+          return cb(null, newUser.rows[0]); 
         } else {
-          const newResult = await db.query(
-            "SELECT * FROM users WHERE email = $1",
-            [profile.email]
-          );
-          currentUserId = newResult.rows[0].user_id;
-          return cb(null, result.rows[0]);
+          return cb(null, result.rows[0]); 
         }
       } catch (err) {
         return cb(err);
@@ -190,12 +185,14 @@ app.post("/api/login", (req, res, next) => {
         error: "Server error. Please try again later.",
       });
     }
+
     if (!user) {
       return res.status(401).json({
         success: false,
         error: info.message || "Authentication failed",
       });
     }
+
     req.logIn(user, (err) => {
       if (err) {
         return res.status(500).json({
@@ -203,8 +200,9 @@ app.post("/api/login", (req, res, next) => {
           error: "Session error. Please try again.",
         });
       }
-      currentUserId = user.user_id; // Update global user ID
-      console.log("current user id: " + currentUserId);
+
+      console.log("Authenticated user ID:", user.user_id);
+
       return res.json({
         success: true,
         user: {
@@ -252,9 +250,6 @@ app.post("/api/register", async (req, res) => {
 });
 
 app.post("/api/logout", (req, res) => {
-  // Clear the currentUserId if you're using it
-  currentUserId = null;
-
   req.logout((err) => {
     if (err) {
       console.error("Logout error:", err);
@@ -275,7 +270,7 @@ app.post("/api/logout", (req, res) => {
       }
 
       // Clear the cookie
-      res.clearCookie("connect.sid"); // or your session cookie name
+      res.clearCookie("connect.sid"); // or whatever your session cookie name is
       return res.json({
         success: true,
         message: "Logged out successfully",
@@ -364,26 +359,36 @@ app.post("/temphum", async (req, res) => {
 Adding new hive to beehives table
 */
 app.post("/admin/add-hive", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
   const { hiveName, hiveLocation, sensorId, photoUrl } = req.body;
-  // Check if sensorId is null or empty
+
+  // Validate input
   if (!sensorId || sensorId.trim() === "") {
     return res.status(400).json({ error: "Sensor ID cannot be empty" });
   }
+
   try {
+    const userId = req.user.user_id; // ✅ Use per-session user ID
+
     const result = await db.query(
       "INSERT INTO beehives (user_id, hive_name, hive_location, hive_type, sensor_id, image_url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-      [currentUserId, hiveName, hiveLocation, null, sensorId, photoUrl]
+      [userId, hiveName, hiveLocation, null, sensorId, photoUrl]
     );
-    // Access hive_number of the newly inserted row
+
     const newHive = result.rows[0];
 
+    // Optional: add a blank sensor data entry
     await db.query(
-      "INSERT INTO sensors_data (sensor_id, temperature, humidity, longitude,latitude) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      "INSERT INTO sensors_data (sensor_id, temperature, humidity, longitude, latitude) VALUES ($1, $2, $3, $4, $5)",
       [newHive.sensor_id, null, null, null, null]
     );
-    res.status(201).json(result.rows[0]);
+
+    res.status(201).json(newHive);
   } catch (err) {
-    console.error(err);
+    console.error("Error adding hive:", err);
     res.status(500).json({ error: "Database error" });
   }
 });
@@ -392,8 +397,9 @@ getting hive list of specific user id
 */
 app.get("/admin/getAllHives", async (req, res) => {
   if (req.isAuthenticated()) {
+    const userId = req.user.user_id; // <-- THIS IS PER-SESSION
     console.log("user Authorized");
-    console.log("user ID: " + currentUserId);
+    console.log("user ID: " + userId);
     try {
       // Get all hives with their latest sensor data in a single query
       const result = await db.query(
@@ -420,7 +426,7 @@ app.get("/admin/getAllHives", async (req, res) => {
       WHERE b.user_id = $1
       ORDER BY b.sensor_id, sd.timestamp DESC
     `,
-        [currentUserId]
+        [userId]
       );
 
       console.log("Complete hive data:", result.rows);
@@ -438,10 +444,21 @@ app.get("/admin/getAllHives", async (req, res) => {
 Get the triggered sensor id that press the more detail
 */
 app.get("/admin/detailed-dashboard/:id", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
   try {
-    currentSensorId = req.params.id;
+    const userId = req.user.user_id;
+    const currentSensorId = req.params.id;
     console.log("sensor Id: " + currentSensorId);
-    res.status(200).send("Dashboard Data");
+        await db.query(
+      'UPDATE users SET current_sensor_id = $1 WHERE user_id = $2',
+      [currentSensorId, userId]
+    );
+
+    //Optionally return some success message or the updated user
+    res.status(200).json({ message: "Current sensor ID updated successfully" });
+  
   } catch (err) {
     console.error("Error fetching hive data:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -451,6 +468,10 @@ app.get("/admin/detailed-dashboard/:id", async (req, res) => {
 Get all the daitailt of the cuurent sensor id
 */
 app.get("/admin/getCurrentSensorData", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  const currentSensorId = req.user.current_sensor_id
   try {
     const result = await db.query(
       "SELECT * FROM sensors_data WHERE sensor_id = $1 ORDER BY timestamp ASC",
@@ -464,8 +485,16 @@ app.get("/admin/getCurrentSensorData", async (req, res) => {
   }
 });
 app.get("/admin/sensor-ids", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
   try {
-    const result = await db.query("SELECT sensor_id FROM beehives where user_id = $1",[currentUserId]);
+    const userId = req.user.user_id;
+    const result = await db.query(
+      "SELECT sensor_id FROM beehives WHERE user_id = $1",
+      [userId]
+    );
     res.json(result.rows); // sends array of { sensor_id: value }
   } catch (err) {
     console.error("Error fetching sensor_ids:", err);
@@ -542,15 +571,32 @@ app.post("/admin/insertState", async (req, res) => {
   }
 });
 app.get("/admin/current-sensor", (req, res) => {
+    if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  const currentSensorId = req.user.current_sensor_id;
   res.json({ currentSensorId });
 });
-app.post("/admin/update-current-sensor", (req, res) => {
+app.post("/admin/update-current-sensor", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  try {
+  const userId = req.user.user_id;
   const { id } = req.body;
   if (!id) {
     return res.status(400).json({ error: "Sensor ID is required" });
   }
-  currentSensorId = id;
+  const currentSensorId = id;
+   await db.query(
+      'UPDATE users SET current_sensor_id = $1 WHERE user_id = $2',
+      [currentSensorId, userId]
+    );
   res.json({ message: "Current sensor ID updated", currentSensorId });
+  } catch (error) {
+    console.error("Failed to update current sensor ID:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 /////////// Edit Hive API ///////////
 app.post("/admin/edit-hive", async (req, res) => {

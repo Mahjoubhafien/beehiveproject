@@ -191,8 +191,13 @@ const HiveCard = ({
             <button
               onClick={async () => {
                 await fetch(
-                  `${process.env.REACT_APP_API_URL}/admin/detailed-dashboard/${id}`
-                );
+                  `${process.env.REACT_APP_API_URL}/admin/detailed-dashboard/${id}`,{
+          credentials: "include",
+          headers: {
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+          },
+        });
                 window.location.href = link;
               }}
               className="group overflow-hidden" // Added overflow-hidden to contain the scaled image

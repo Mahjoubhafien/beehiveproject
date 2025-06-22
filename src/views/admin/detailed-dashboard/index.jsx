@@ -17,8 +17,9 @@ import MapComponent from "./components/GpsMap";
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
 import MultipleSelectChip from "./components/Selecthive";
-
 import Widget from "components/widget/Widget";
+import { MdDelete } from "react-icons/md";
+import { useNavigate } from 'react-router-dom'; // Make sure you import navigate
 
 const Dashboard = () => {
   const [allSensorData, setAllSensorData] = useState([]);
@@ -37,6 +38,7 @@ const Dashboard = () => {
 
   
   /////////// Fetch the selected Sensor data, repeated every 1s ( you can change it) ////////
+  const navigate = useNavigate();
   useEffect(() => {
     const fetchCurrentSensorData = async () => {
       const MIN_TEMP = 32;
@@ -46,8 +48,20 @@ const Dashboard = () => {
 
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/admin/getCurrentSensorData`
-      );
+        `${process.env.REACT_APP_API_URL}/admin/getCurrentSensorData`,{
+          credentials: "include",
+          headers: {
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+          },
+        });
+        if (response.status === 401) {
+        navigate('/auth/sign-in'); // Redirect if unauthorized
+        return;
+      }
+       if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const sensorData = await response.json();
       const latest = sensorData[sensorData.length - 1];
       //console.log(latest);
@@ -87,7 +101,7 @@ const Dashboard = () => {
 
     // Clear interval on unmount
     return () => clearInterval(interval);
-  }, []);
+  }, [navigate]);
   ////////// fetch the current location ///////////
   useEffect(() => {
     const fetchSensorLocation = async () => {
@@ -111,10 +125,20 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchSensorIds = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/admin/sensor-ids`);
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/admin/sensor-ids`,{
+          credentials: "include",
+          headers: {
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+          },
+        });
+         if (response.status === 401) {
+        navigate('/auth/sign-in'); // Redirect if unauthorized
+        return;
+      }
+       if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
         const data = await response.json();
         const sensorIds = data.map((item) => item.sensor_id);
         setAllSensors(sensorIds);
@@ -130,8 +154,13 @@ const Dashboard = () => {
     const fetchCurrentSensorId = async () => {
 try {
   const response = await fetch(
-    `${process.env.REACT_APP_API_URL}/admin/current-sensor`
-  );
+    `${process.env.REACT_APP_API_URL}/admin/current-sensor`,{
+          credentials: "include",
+          headers: {
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+          },
+        });
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }
@@ -144,6 +173,21 @@ try {
 
     fetchCurrentSensorId();
   }, []);
+  
+  const handleDeleteHive = () => {
+  const confirmed = window.confirm(
+    "Are you sure you want to delete this hive? You will lose all hive data."
+  );
+  if (confirmed) {
+    // Proceed with deletion logic here
+    console.log("User confirmed deletion");
+
+    // Call your API to delete the hive...
+  } else {
+    console.log("User canceled deletion");
+  }
+};
+
 /**/ 
   return (
     <div>
@@ -177,10 +221,20 @@ try {
           )
         )
       ) : null}
-      <MultipleSelectChip
-        allSonsorsIds={allSensors}
-        currentSensorId={currentSensorId}
-      />
+  <div className="flex items-center justify-between mt-1">
+    <MultipleSelectChip
+      allSonsorsIds={allSensors}
+      currentSensorId={currentSensorId}
+    />
+    
+    <button
+      className="flex items-center gap-2 bg-red-600 text-white px-2 py-2 rounded hover:bg-red-700"
+      onClick={handleDeleteHive}
+    >
+      Delete Hive <MdDelete />
+
+    </button>
+  </div>
       {/* Card widget */}
       <div className="mt-3 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-3 3xl:grid-cols-6">
         <Widget

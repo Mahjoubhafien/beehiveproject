@@ -2,13 +2,16 @@ import React, { useEffect, useState } from "react";
 import CardMenu from "components/card/CardMenu";
 import Card from "components/card";
 import { FaSms } from "react-icons/fa";
+import { FaTemperatureHigh } from "react-icons/fa";
+import { WiHumidity } from "react-icons/wi";
+import { GiWeight } from "react-icons/gi";
 
 function SmsAlertsTable(props) {
-// Initialize state from localStorage or use default
+  // Initialize state from localStorage or use default
   const [smsEnabled, setSmsEnabled] = useState(() => {
-    const saved = localStorage.getItem('smsEnabled');
-    return saved === 'true' ? true : false;
-  });  
+    const saved = localStorage.getItem("smsEnabled");
+    return saved === "true" ? true : false;
+  });
   // State for threshold values
   const [tempMin, setTempMin] = useState(32);
   const [tempMax, setTempMax] = useState(36);
@@ -19,29 +22,32 @@ function SmsAlertsTable(props) {
 
   // Save states to localStorage when they change
   useEffect(() => {
-    localStorage.setItem('smsEnabled', smsEnabled);
+    localStorage.setItem("smsEnabled", smsEnabled);
   }, [smsEnabled]);
 
   const handleSave = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/alert-config`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          MIN_TEMP: tempMin,
-          MAX_TEMP: tempMax,
-          MIN_HUMIDITY: humidityMin,
-          MAX_HUMIDITY: humidityMax,
-          isAlertsON: smsEnabled
-        })
-      });
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/alert-config`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            MIN_TEMP: tempMin,
+            MAX_TEMP: tempMax,
+            MIN_HUMIDITY: humidityMin,
+            MAX_HUMIDITY: humidityMax,
+            isAlertsON: smsEnabled,
+          }),
+        }
+      );
 
       const data = await response.json();
-      
+
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to save settings');
+        throw new Error(data.message || "Failed to save settings");
       }
 
       console.log("API Response:", data);
@@ -57,7 +63,7 @@ function SmsAlertsTable(props) {
       <header className="relative flex items-center justify-between pt-4">
         <div className="flex items-center gap-2 text-xl font-bold text-navy-700 dark:text-white">
           SMS Alerts Settings <FaSms />
-        </div>        
+        </div>
         <CardMenu />
       </header>
 
@@ -69,9 +75,9 @@ function SmsAlertsTable(props) {
               Enable SMS Notification
             </span>
             <label className="relative inline-flex cursor-pointer items-center">
-              <input 
-                type="checkbox" 
-                className="peer sr-only" 
+              <input
+                type="checkbox"
+                className="peer sr-only"
                 checked={smsEnabled}
                 onChange={() => setSmsEnabled(!smsEnabled)}
               />
@@ -85,17 +91,17 @@ function SmsAlertsTable(props) {
           <table className="w-full">
             <thead>
               <tr className="!border-px !border-gray-400">
-                <th className="cursor-pointer border-b-[1px] border-gray-200 pt-4 pb-2 pr-4 text-start">
+                <th className="cursor-pointer border-b-[1px] border-gray-200 pb-2 pr-4 pt-4 text-start">
                   <div className="items-center justify-between text-xs text-gray-200">
                     Parameter
                   </div>
                 </th>
-                <th className="cursor-pointer border-b-[1px] border-gray-200 pt-4 pb-2 pr-4 text-start">
+                <th className="cursor-pointer border-b-[1px] border-gray-200 pb-2 pr-4 pt-4 text-start">
                   <div className="items-center justify-between text-xs text-gray-200">
                     Min Threshold
                   </div>
                 </th>
-                <th className="cursor-pointer border-b-[1px] border-gray-200 pt-4 pb-2 pr-4 text-start">
+                <th className="cursor-pointer border-b-[1px] border-gray-200 pb-2 pr-4 pt-4 text-start">
                   <div className="items-center justify-between text-xs text-gray-200">
                     Max Threshold
                   </div>
@@ -105,64 +111,76 @@ function SmsAlertsTable(props) {
             <tbody>
               {/* Temperature Row */}
               <tr>
-                <td className="min-w-[150px] border-white/0 py-3 pr-4 font-medium">Temperature</td>
+                <td className="ml-0 flex min-w-[150px] items-center gap-2 border-white/0 py-3 pr-4 font-medium text-red-600 dark:text-red-400">
+                  <FaTemperatureHigh className="text-xl" /> Temperature
+                </td>{" "}
                 <td className="min-w-[150px] border-white/0 py-3 pr-4">
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={tempMin}
                     onChange={(e) => setTempMin(Number(e.target.value))}
-                    className="w-16 rounded border border-gray-300 px-2 py-1 text-sm dark:bg-gray-800 dark:border-gray-700"
-                  /> °C
+                    className="w-16 rounded border border-gray-300 px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
+                  />{" "}
+                  °C
                 </td>
                 <td className="min-w-[150px] border-white/0 py-3 pr-4">
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={tempMax}
                     onChange={(e) => setTempMax(Number(e.target.value))}
-                    className="w-16 rounded border border-gray-300 px-2 py-1 text-sm dark:bg-gray-800 dark:border-gray-700"
-                  /> °C
+                    className="w-16 rounded border border-gray-300 px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
+                  />{" "}
+                  °C
                 </td>
               </tr>
-              
+
               {/* Humidity Row */}
               <tr>
-                <td className="min-w-[150px] border-white/0 py-3 pr-4 font-medium">Humidity</td>
+                <td className="flex min-w-[150px] items-center gap-2 border-white/0 py-3 pr-4 font-medium text-blue-600 dark:text-blue-400">
+                  <WiHumidity className="text-2xl" /> Humidity
+                </td>
                 <td className="min-w-[150px] border-white/0 py-3 pr-4">
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={humidityMin}
                     onChange={(e) => setHumidityMin(Number(e.target.value))}
-                    className="w-16 rounded border border-gray-300 px-2 py-1 text-sm dark:bg-gray-800 dark:border-gray-700"
-                  /> %
+                    className="w-16 rounded border border-gray-300 px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
+                  />{" "}
+                  %
                 </td>
                 <td className="min-w-[150px] border-white/0 py-3 pr-4">
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={humidityMax}
                     onChange={(e) => setHumidityMax(Number(e.target.value))}
-                    className="w-16 rounded border border-gray-300 px-2 py-1 text-sm dark:bg-gray-800 dark:border-gray-700"
-                  /> %
+                    className="w-16 rounded border border-gray-300 px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
+                  />{" "}
+                  %
                 </td>
               </tr>
-              
+
               {/* Weight Row */}
               <tr>
-                <td className="min-w-[150px] border-white/0 py-3 pr-4 font-medium">Weight</td>
-                <td className="min-w-[150px] border-white/0 py-3 pr-4">
-                  <input 
-                    type="number" 
-                    value={weightMin}
-                    onChange={(e) => setWeightMin(Number(e.target.value))}
-                    className="w-16 rounded border border-gray-300 px-2 py-1 text-sm dark:bg-gray-800 dark:border-gray-700"
-                  /> Kg
+                <td className="flex min-w-[150px] items-center gap-2 border-white/0 py-3 pr-4 font-medium text-green-600 dark:text-green-400">
+                  <GiWeight className="text-xl" /> Weight
                 </td>
                 <td className="min-w-[150px] border-white/0 py-3 pr-4">
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
+                    value={weightMin}
+                    onChange={(e) => setWeightMin(Number(e.target.value))}
+                    className="w-16 rounded border border-gray-300 px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
+                  />{" "}
+                  Kg
+                </td>
+                <td className="min-w-[150px] border-white/0 py-3 pr-4">
+                  <input
+                    type="number"
                     value={weightMax}
                     onChange={(e) => setWeightMax(Number(e.target.value))}
-                    className="w-16 rounded border border-gray-300 px-2 py-1 text-sm dark:bg-gray-800 dark:border-gray-700"
-                  /> Kg
+                    className="w-16 rounded border border-gray-300 px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
+                  />{" "}
+                  Kg
                 </td>
               </tr>
             </tbody>
@@ -170,7 +188,7 @@ function SmsAlertsTable(props) {
         </div>
 
         {/* Centered Save Button */}
-        <div className="mt-6 flex justify-center mb-5">
+        <div className="mb-5 mt-6 flex justify-center">
           <button
             onClick={handleSave}
             className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
