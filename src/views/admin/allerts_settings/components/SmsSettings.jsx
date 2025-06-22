@@ -8,12 +8,7 @@ import { GiWeight } from "react-icons/gi";
 import { useNavigate } from 'react-router-dom'; 
 
 function SmsAlertsTable(props) {
-  // Initialize state from localStorage or use default
-  const [smsEnabled, setSmsEnabled] = useState(() => {
-    const saved = localStorage.getItem("smsEnabled");
-    return saved === "true" ? true : false;
-  });
-  // State for threshold values
+  const [smsEnabled, setSmsEnabled] = useState();
   const [tempMin, setTempMin] = useState();
   const [tempMax, setTempMax] = useState();
   const [humidityMin, setHumidityMin] = useState();
