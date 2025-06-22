@@ -839,6 +839,44 @@ app.post("/api/update_alert-config", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+// Delete Hive API
+app.delete("/api/delete-hive", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  const sensorId = req.user.current_sensor_id;
+
+  if (!sensorId) {
+    return res.status(400).json({ error: "No current sensor selected" });
+  }
+
+  try {
+    // Begin transaction
+    await db.query("BEGIN");
+
+    // Delete all data related to the sensor in sensors_data
+    await db.query("DELETE FROM sensors_data WHERE sensor_id = $1", [sensorId]);
+
+    // Delete the hive from beehives table
+    await db.query("DELETE FROM beehives WHERE sensor_id = $1", [sensorId]);
+
+    // Optionally, also unset current_sensor_id from the user
+    await db.query(
+      "UPDATE users SET current_sensor_id = NULL WHERE current_sensor_id = $1",
+      [sensorId]
+    );
+
+    // Commit transaction
+    await db.query("COMMIT");
+
+    res.status(200).json({ message: `Hive and related data for sensor '${sensorId}' deleted.` });
+  } catch (error) {
+    await db.query("ROLLBACK");
+    console.error("Error deleting hive:", error);
+    res.status(500).json({ error: "Failed to delete hive" });
+  }
+});
 
 
 

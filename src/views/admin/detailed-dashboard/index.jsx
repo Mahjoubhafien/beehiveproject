@@ -174,19 +174,42 @@ try {
     fetchCurrentSensorId();
   }, []);
   
-  const handleDeleteHive = () => {
+const handleDeleteHive = async () => {
   const confirmed = window.confirm(
     "Are you sure you want to delete this hive? You will lose all hive data."
   );
-  if (confirmed) {
-    // Proceed with deletion logic here
+
+  if (!confirmed) {
+    console.log("User canceled deletion");
+    return;
+  }
+
+  try {
     console.log("User confirmed deletion");
 
-    // Call your API to delete the hive...
-  } else {
-    console.log("User canceled deletion");
+    const response = await fetch(
+      `${process.env.REACT_APP_API_URL}/api/delete-hive`,
+      {
+        method: "DELETE",
+        credentials: "include", // Required for session/cookie-based auth
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to delete hive");
+    }
+
+    alert("Hive deleted successfully!");
+
+    window.location.href = "/admin/all-hives";
+  } catch (error) {
+    console.error("Error deleting hive:", error);
+    alert(error.message || "An error occurred while deleting the hive.");
   }
 };
+
 
 /**/ 
   return (
@@ -228,7 +251,7 @@ try {
     />
     
     <button
-      className="flex items-center gap-2 bg-red-600 text-white px-2 py-2 rounded hover:bg-red-700"
+      className="flex items-center gap-1 rounded-xl bg-red-500 px-5 py-3 text-base font-medium text-white transition duration-200 hover:bg-red-600 active:bg-red-700 dark:bg-red-400 dark:text-white dark:hover:bg-red-300 dark:active:bg-red-200"
       onClick={handleDeleteHive}
     >
       Delete Hive <MdDelete />
