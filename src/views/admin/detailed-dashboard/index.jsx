@@ -19,7 +19,7 @@ import Box from "@mui/material/Box";
 import MultipleSelectChip from "./components/Selecthive";
 import Widget from "components/widget/Widget";
 import { MdDelete } from "react-icons/md";
-import { useNavigate } from 'react-router-dom'; // Make sure you import navigate
+import { useNavigate } from 'react-router-dom'; 
 
 const Dashboard = () => {
   const [allSensorData, setAllSensorData] = useState([]);

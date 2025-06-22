@@ -699,11 +699,146 @@ app.post('/api/alert-config', (req, res) => {
     res.json({ message: 'Alert config updated successfully', config });
 });
 
-// === GET API to be used by SIM800C ===
-app.get('/api/alert-config', (req, res) => {
-    res.json(config);
+// === public api for sim800c ===
+app.get("/api/public_alert-config", async (req, res) => {
+  const { user_id } = req.query;
+
+  if (!user_id) {
+    return res.status(400).json({ error: "Missing user_id in query" });
+  }
+
+  try {
+    const result = await db.query(
+      'SELECT * FROM sms_alert_settings WHERE user_id = $1',
+      [user_id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(200).json({
+        MIN_TEMP: 32,
+        MAX_TEMP: 36,
+        MIN_HUMIDITY: 50,
+        MAX_HUMIDITY: 70,
+        MIN_WEIGHT: 10,
+        MAX_WEIGHT: 100,
+        isAlertsON: false
+      });
+    }
+
+    const row = result.rows[0];
+
+    return res.status(200).json({
+      MIN_TEMP: row.min_temp,
+      MAX_TEMP: row.max_temp,
+      MIN_HUMIDITY: row.min_humidity,
+      MAX_HUMIDITY: row.max_humidity,
+      MIN_WEIGHT: row.min_weight,
+      MAX_WEIGHT: row.max_weight,
+      isAlertsON: row.is_alerts_on,
+    });
+  } catch (error) {
+    console.error("Error fetching alert config:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
+// === GET SMS Alerts Configuration From database ===
+app.get("/api/sms-alert-settings", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    const userId = req.user.user_id;
+
+    const result = await db.query(
+      'SELECT * FROM sms_alert_settings WHERE user_id = $1',
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      // No settings found — return defaults
+      return res.status(200).json({
+        MIN_TEMP: 32,
+        MAX_TEMP: 36,
+        MIN_HUMIDITY: 50,
+        MAX_HUMIDITY: 70,
+        MIN_WEIGHT: 10,
+        MAX_WEIGHT: 100,
+        isAlertsON: false
+      });
+    }
+
+    // Return first row of user-specific settings
+    const row = result.rows[0];
+
+    return res.status(200).json({
+      MIN_TEMP: row.min_temp,
+      MAX_TEMP: row.max_temp,
+      MIN_HUMIDITY: row.min_humidity,
+      MAX_HUMIDITY: row.max_humidity,
+      MIN_WEIGHT: row.min_weight,
+      MAX_WEIGHT: row.max_weight,
+      isAlertsON: row.is_alerts_on,
+    });
+  } catch (error) {
+    console.error("Error fetching SMS alert settings:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+// udate the alers sms setting in the db 
+app.post("/api/update_alert-config", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    const userId = req.user.user_id;
+
+    const {
+      MIN_TEMP,
+      MAX_TEMP,
+      MIN_HUMIDITY,
+      MAX_HUMIDITY,
+      MIN_WEIGHT,
+      MAX_WEIGHT,
+      isAlertsON
+    } = req.body;
+
+    await db.query(
+      `
+      INSERT INTO sms_alert_settings 
+        (user_id, min_temp, max_temp, min_humidity, max_humidity, min_weight, max_weight, is_alerts_on)
+      VALUES 
+        ($1, $2, $3, $4, $5, $6, $7, $8)
+      ON CONFLICT (user_id) 
+      DO UPDATE SET 
+        min_temp = EXCLUDED.min_temp,
+        max_temp = EXCLUDED.max_temp,
+        min_humidity = EXCLUDED.min_humidity,
+        max_humidity = EXCLUDED.max_humidity,
+        min_weight = EXCLUDED.min_weight,
+        max_weight = EXCLUDED.max_weight,
+        is_alerts_on = EXCLUDED.is_alerts_on
+      `,
+      [
+        userId,
+        MIN_TEMP,
+        MAX_TEMP,
+        MIN_HUMIDITY,
+        MAX_HUMIDITY,
+        MIN_WEIGHT,
+        MAX_WEIGHT,
+        isAlertsON
+      ]
+    );
+
+    res.status(200).json({ message: "Alert settings saved successfully" });
+  } catch (error) {
+    console.error("Error saving alert settings:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 
 

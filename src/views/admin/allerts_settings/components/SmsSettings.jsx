@@ -5,6 +5,7 @@ import { FaSms } from "react-icons/fa";
 import { FaTemperatureHigh } from "react-icons/fa";
 import { WiHumidity } from "react-icons/wi";
 import { GiWeight } from "react-icons/gi";
+import { useNavigate } from 'react-router-dom'; 
 
 function SmsAlertsTable(props) {
   // Initialize state from localStorage or use default
@@ -13,50 +14,88 @@ function SmsAlertsTable(props) {
     return saved === "true" ? true : false;
   });
   // State for threshold values
-  const [tempMin, setTempMin] = useState(32);
-  const [tempMax, setTempMax] = useState(36);
-  const [humidityMin, setHumidityMin] = useState(50);
-  const [humidityMax, setHumidityMax] = useState(70);
-  const [weightMin, setWeightMin] = useState(10);
-  const [weightMax, setWeightMax] = useState(100);
+  const [tempMin, setTempMin] = useState();
+  const [tempMax, setTempMax] = useState();
+  const [humidityMin, setHumidityMin] = useState();
+  const [humidityMax, setHumidityMax] = useState();
+  const [weightMin, setWeightMin] = useState();
+  const [weightMax, setWeightMax] = useState();
 
-  // Save states to localStorage when they change
-  useEffect(() => {
-    localStorage.setItem("smsEnabled", smsEnabled);
-  }, [smsEnabled]);
 
-  const handleSave = async () => {
+const navigate = useNavigate();
+useEffect(() => {
+  const fetchSettings = async () => {
     try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/api/alert-config`,
-        {
-          method: "POST",
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/sms-alert-settings`, {
+          credentials: "include",
           headers: {
-            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
           },
-          body: JSON.stringify({
-            MIN_TEMP: tempMin,
-            MAX_TEMP: tempMax,
-            MIN_HUMIDITY: humidityMin,
-            MAX_HUMIDITY: humidityMax,
-            isAlertsON: smsEnabled,
-          }),
-        }
-      );
-
+        });
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to save settings");
+        if (response.status === 401) {
+        navigate('/auth/sign-in'); // Redirect if unauthorized
+        return;
+      }
+       if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      console.log("API Response:", data);
-      alert("Settings saved successfully!");
+      setTempMin(data.MIN_TEMP);
+      setTempMax(data.MAX_TEMP);
+      setHumidityMin(data.MIN_HUMIDITY);
+      setHumidityMax(data.MAX_HUMIDITY);
+      setWeightMin(data.MIN_WEIGHT);
+      setWeightMax(data.MAX_WEIGHT);
+      setSmsEnabled(data.isAlertsON);
     } catch (error) {
-      console.error("Failed to save settings:", error);
-      alert(error.message || "Failed to save settings. Please try again.");
+      console.error("Failed to fetch alert settings:", error);
+      // You can optionally leave the default values as-is here
     }
   };
+
+  fetchSettings();
+}, [navigate]);
+
+const handleSave = async () => {
+  try {
+    const response = await fetch(
+      `${process.env.REACT_APP_API_URL}/api/update_alert-config`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+        },
+        body: JSON.stringify({
+          MIN_TEMP: tempMin,
+          MAX_TEMP: tempMax,
+          MIN_HUMIDITY: humidityMin,
+          MAX_HUMIDITY: humidityMax,
+          MIN_WEIGHT: weightMin,
+          MAX_WEIGHT: weightMax,
+          isAlertsON: smsEnabled,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to save settings");
+    }
+
+    console.log("API Response:", data);
+    alert("Settings saved successfully!");
+  } catch (error) {
+    console.error("Failed to save settings:", error);
+    alert(error.message || "Failed to save settings. Please try again.");
+  }
+};
 
   return (
     <Card extra={"w-full h-full sm:overflow-auto px-6"}>
